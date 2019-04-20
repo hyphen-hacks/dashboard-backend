@@ -40,7 +40,11 @@ function getEventbriteAttendees(url) {
               "ticket_class_name": i.ticket_class_name,
               "event_id": i.event_id,
               "order_id": i.order_id,
-              "ticket_class_id": i.ticket_class_id
+              "ticket_class_id": i.ticket_class_id,
+              waiverStatus: 0,
+              waiverImage: null,
+              checkedIn: false,
+              onCampus: false
             }
             eventbriteData.push(b)
             return b
@@ -51,7 +55,7 @@ function getEventbriteAttendees(url) {
           }
           resolve(cleanedAttendees)
         }
-       // console.log(data)
+        // console.log(data)
 
       })
       .catch(function (e) {
@@ -61,7 +65,7 @@ function getEventbriteAttendees(url) {
   )
 }
 
-const updateFirebaseWithNewEventbriteData =  async () => {
+const updateFirebaseWithNewEventbriteData = async () => {
   console.log('updating firebase with eventbrite...')
   await getEventbriteAttendees(keys.eventbriteURL).then((e) => {
     fs.writeFile('./private/sample-api-return.json', JSON.stringify(eventbriteData), () => {
@@ -85,5 +89,5 @@ const updateFirebaseWithNewEventbriteData =  async () => {
 }
 
 updateFirebaseWithNewEventbriteData().then(e => {
-console.log('next')
+  console.log('next')
 })
