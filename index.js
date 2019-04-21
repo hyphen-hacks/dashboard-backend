@@ -31,7 +31,7 @@ function getEventbriteAttendees(url) {
               "quantity": i.quantity,
               "variant_id": i.variant_id,
               "profile": i.profile,
-              // "phone": i.mo,
+             // "phone": i.mo,
               gender: i.gender,
               age: i.age,
               "birth_date": i.birth_date,
@@ -99,13 +99,13 @@ const express = require('express'),
   app = express(),
   port = 3000;
 
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
-  //const body = req.body;
+  const body = req.body;
 
-  console.log(JSON.stringify(req));
+console.log(body, req.params, req.headers);
 
   res.status(200);
   res.send();
