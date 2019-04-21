@@ -99,11 +99,11 @@ const express = require('express'),
   app = express(),
   port = 3000;
 
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   const body = req.body;
-
 
   console.log(body, req.params, req.headers);
 
