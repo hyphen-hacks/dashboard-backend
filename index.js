@@ -109,7 +109,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-  let id = body.user_id
+  let id = body.config.user_id
   if (id) {
     console.log('edited: ' + id);
 
