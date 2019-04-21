@@ -109,13 +109,13 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-  let id = body.config.user_id
+  let id = body.config.api_url
   if (id) {
     console.log('edited: ' + id);
     console.log(body)
 
-    db.collection('people').doc(id).get().then(e => {
-      fetch(keys.eventbriteURL + id, {
+    db.collection('people').doc(id.substr(id.length - 10)).get().then(e => {
+      fetch(id, {
         method: 'get',
         headers: {
           'Authorization': 'Bearer ' + keys.eventbriteAPIKey,
@@ -159,7 +159,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
               console.log('doesn\'t exist yet getting added ')
 
             }
-            db.collection('people').doc(id).set(person)
+            db.collection('people').doc(id.substr(id.length - 10)).set(person)
           }
 
 
