@@ -107,11 +107,9 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
 
   console.log(body, req.params, req.headers);
 
-  res.json({
-    message: 'ok got it!',
-    body
-  });
-  res.end();
+  res.status(200);
+  res.send();
+
 });
 
 const server = app.listen(port, function () {
