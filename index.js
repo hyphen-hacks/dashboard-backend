@@ -112,7 +112,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e) => {
     console.log(e)
   })
-  if (body.action === "attendee.updated") {
+  if (body.config.action === "attendee.updated") {
     let url = body.api_url
     let id = url.substr(id.length - 10)
     console.log(url, id, 'url,id')
@@ -172,7 +172,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
     )
 
   } else {
-    console.log('other action', body.action)
+    console.log('other action', body.config.action)
   }
 
 
