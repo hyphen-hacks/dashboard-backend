@@ -105,7 +105,7 @@ app.use(bodyParser.json());
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   console.info('recived')
   res.status(200);
-  res.send();
+  res.send({'status: reicved and prosessing'});
   const body = req.body;
 
   console.log(body, req.params, req.headers);
