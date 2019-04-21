@@ -114,9 +114,10 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   })
   if (body.config.action === "attendee.updated") {
     let url = body.api_url
-    let id = url.substr(id.length - 10)
-    console.log(url, id, 'url,id')
     console.log('edited: ' + url);
+    let id = url.substr(url.length - 11)
+    console.log(url, id, 'url,id')
+
     fetch(url, {
       method: 'get',
       headers: {
@@ -138,11 +139,11 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             "variant_id": i.variant_id,
             "profile": i.profile,
             // "phone": i.mo,
-            gender: i.gender,
-            age: i.age,
-            "birth_date": i.birth_date,
-            "email": i.email,
-            "name": i.name,
+            gender: i.profile.gender,
+            age: i.profile.age,
+            "birth_date": i.profile.birth_date,
+            "email": i.profile.email,
+            "name": i.profile.name,
             answers: i.answers,
             "ticket_class_name": i.ticket_class_name,
             "event_id": i.event_id,
@@ -154,7 +155,9 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             onCampus: false,
             waiverReviewedBy: ''
           }
-          console.log('person', person)
+        //  console.log('person', person)
+          fs.writeFile('./private/samplePerson.json', JSON.stringify(person), (e) => {})
+          fs.writeFile('./private/samplePersonApiReturn.json', JSON.stringify(data), (e) => {})
           db.collection('people').doc(person.id).get().then(e => {
             if (e.exists) {
               console.log('exists on fb')
@@ -162,7 +165,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
               console.log('doesnt exist on fb')
 
             }
-            db.collection('people').doc(person.id).set(person).then((e)=> {
+            db.collection('people').doc(person.id).set(person).then((e) => {
               console.log(e, 'written? to fb')
             })
           });
