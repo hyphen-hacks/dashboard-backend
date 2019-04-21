@@ -101,11 +101,11 @@ const express = require('express'),
 
 app.use(bodyParser.json());
 
-app.post('/', function (req, res) {
+app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   const body = req.body;
 
 
-  console.log(body);
+  console.log(body, req);
 
   res.json({
     message: 'ok got it!'
