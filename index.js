@@ -109,14 +109,14 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-  fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e) => {
+/*  fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e) => {
     console.log(e)
-  })
+  })*/
   if (body.config.action === "attendee.updated") {
     let url = body.api_url
-    console.log('edited: ' + url);
+  //  console.log('edited: ' + url);
     let id = url.substr(url.length - 11)
-    console.log(url, id, 'url,id')
+  //  console.log(url, id, 'url,id')
 
     fetch(url, {
       method: 'get',
@@ -156,8 +156,8 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             waiverReviewedBy: ''
           }
         //  console.log('person', person)
-          fs.writeFile('./private/samplePerson.json', JSON.stringify(person), (e) => {})
-          fs.writeFile('./private/samplePersonApiReturn.json', JSON.stringify(data), (e) => {})
+        //  fs.writeFile('./private/samplePerson.json', JSON.stringify(person), (e) => {})
+        //  fs.writeFile('./private/samplePersonApiReturn.json', JSON.stringify(data), (e) => {})
           db.collection('people').doc(person.id).get().then(e => {
             if (e.exists) {
               console.log('exists on fb')
@@ -166,7 +166,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
 
             }
             db.collection('people').doc(person.id).set(person).then((e) => {
-              console.log(e, 'written? to fb')
+              console.log( 'written? to fb')
             })
           });
 
