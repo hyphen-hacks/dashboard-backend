@@ -105,16 +105,67 @@ app.use(bodyParser.json());
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   console.info('recived')
   res.status(200);
-  res.send({status:' reicved and prosessing'});
+  res.send({status: ' reicved and prosessing'});
   const body = req.body;
-
-  console.log(body);
-
-
+  let id = body.user_id
+  console.log('edited: ' + id);
 
 
+  db.collection('people').doc(id).get().then(e => {
+    fetch(keys.eventbriteURL + id, {
+      method: 'get',
+      headers: {
+        'Authorization': 'Bearer ' + keys.eventbriteAPIKey,
+      }
+    }).then((resp) => resp.json()).then(data => {
+        if (data.error) {
+          console.error(data.error, data.error_description, 'eventbrite fetch')
+        } else {
+
+          const i = data
+
+          const person = {
+            "resource_uri": i.resource_uri,
+            "id": i.id,
+            "changed": i.changed,
+            "created": i.created,
+            "quantity": i.quantity,
+            "variant_id": i.variant_id,
+            "profile": i.profile,
+            // "phone": i.mo,
+            gender: i.gender,
+            age: i.age,
+            "birth_date": i.birth_date,
+            "email": i.email,
+            "name": i.name,
+            answers: i.answers,
+            "ticket_class_name": i.ticket_class_name,
+            "event_id": i.event_id,
+            "order_id": i.order_id,
+            "ticket_class_id": i.ticket_class_id,
+            waiverStatus: 0,
+            waiverImage: null,
+            checkedIn: false,
+            onCampus: false,
+            waiverReviewedBy: ''
+          }
+          if (e.exists) {
+            console.log('allready exists but still updating')
+
+          } else {
+            console.log('doesn\'t exist yet getting added ')
+
+          }
+          db.collection('people').doc(id).set(person)
+        }
+
+
+      }
+    )
+
+
+  });
 });
-
 const server = app.listen(port, function () {
 
   const host = server.address().address
