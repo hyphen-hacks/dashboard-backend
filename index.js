@@ -112,7 +112,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   let id = body.config.user_id
   if (id) {
     console.log('edited: ' + id);
-
+    console.log(body)
 
     db.collection('people').doc(id).get().then(e => {
       fetch(keys.eventbriteURL + id, {
