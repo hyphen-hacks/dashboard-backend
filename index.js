@@ -103,12 +103,13 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
-  const body = req.body;
+  //const body = req.body;
 
-  console.log(body, req.params, req.headers);
+//  console.log(body, req.params, req.headers);
 
   res.status(200);
   res.send();
+  res.end();
 
 });
 
