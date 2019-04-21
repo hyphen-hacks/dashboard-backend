@@ -105,10 +105,11 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   const body = req.body;
 
 
-  console.log(body, req);
+  console.log(body, req.params, req.headers);
 
   res.json({
-    message: 'ok got it!'
+    message: 'ok got it!',
+    body
   });
 });
 
