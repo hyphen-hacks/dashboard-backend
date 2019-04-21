@@ -108,7 +108,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.send({status:' reicved and prosessing'});
   const body = req.body;
 
-  console.log(body, req.params, req.headers);
+  console.log(body);
 
 
 
