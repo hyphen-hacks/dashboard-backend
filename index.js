@@ -110,7 +110,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
   fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e)=> {console.log(e)})
-  let id = body.config.api_url
+  let id = body.api_url
 
   console.log('edited: ' + id);
   console.log(body)
