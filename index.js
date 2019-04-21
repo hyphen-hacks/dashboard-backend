@@ -31,6 +31,7 @@ function getEventbriteAttendees(url) {
               "quantity": i.quantity,
               "variant_id": i.variant_id,
               "profile": i.profile,
+             // "phone": i.mo,
               gender: i.gender,
               age: i.age,
               "birth_date": i.birth_date,
@@ -44,7 +45,8 @@ function getEventbriteAttendees(url) {
               waiverStatus: 0,
               waiverImage: null,
               checkedIn: false,
-              onCampus: false
+              onCampus: false,
+              waiverReviewedBy: ''
             }
             eventbriteData.push(b)
             return b
@@ -91,3 +93,30 @@ const updateFirebaseWithNewEventbriteData = async () => {
 updateFirebaseWithNewEventbriteData().then(e => {
   console.log('next')
 })
+
+const express = require('express'),
+  bodyParser = require('body-parser'),
+  app = express(),
+  port = 3000;
+
+app.use(bodyParser.json());
+
+app.post('/', function (req, res) {
+  const body = req.body;
+
+
+  console.log(body);
+
+  res.json({
+    message: 'ok got it!'
+  });
+});
+
+const server = app.listen(port, function () {
+
+  const host = server.address().address
+  const port = server.address().port
+
+  console.log('Example app listening at http://%s:%s', host, port)
+
+});
