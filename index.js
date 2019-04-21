@@ -109,14 +109,15 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-  fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e)=> {console.log(e)})
-  let id = body.api_url
-
-  console.log('edited: ' + id);
-  console.log(body)
-
-  db.collection('people').doc(id.substr(id.length - 10)).get().then(e => {
-    fetch(id, {
+  fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e) => {
+    console.log(e)
+  })
+  if (body.action === "attendee.updated") {
+    let url = body.api_url
+    let id = url.substr(id.length - 10)
+    console.log(url, id, 'url,id')
+    console.log('edited: ' + url);
+    fetch(url, {
       method: 'get',
       headers: {
         'Authorization': 'Bearer ' + keys.eventbriteAPIKey,
@@ -153,22 +154,26 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             onCampus: false,
             waiverReviewedBy: ''
           }
-          if (e.exists) {
-            console.log('allready exists but still updating')
+          console.log('person', person)
+          db.collection('people').doc(person.id).get().then(e => {
+            if (e.exists) {
+              console.log('exists on fb')
+            } else {
+              console.log('doesnt exist on fb')
 
-          } else {
-            console.log('doesn\'t exist yet getting added ')
+            }
+            db.collection('people').doc(person.id).set(person).then((e)=> {
+              console.log(e, 'written? to fb')
+            })
+          });
 
-          }
-          db.collection('people').doc(id.substr(id.length - 10)).set(person)
         }
-
-
       }
     )
 
-
-  });
+  } else {
+    console.log('other action', body.action)
+  }
 
 
 });
