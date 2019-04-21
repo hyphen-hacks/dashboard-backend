@@ -109,68 +109,67 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
+  fs.writeFile('./private/eventbriteapi.json', JSON.stringify(body), (e)=> {console.log(e)})
   let id = body.config.api_url
-  if (id) {
-    console.log('edited: ' + id);
-    console.log(body)
 
-    db.collection('people').doc(id.substr(id.length - 10)).get().then(e => {
-      fetch(id, {
-        method: 'get',
-        headers: {
-          'Authorization': 'Bearer ' + keys.eventbriteAPIKey,
-        }
-      }).then((resp) => resp.json()).then(data => {
-          if (data.error) {
-            console.error(data.error, data.error_description, 'eventbrite fetch')
-          } else {
+  console.log('edited: ' + id);
+  console.log(body)
 
-            const i = data
+  db.collection('people').doc(id.substr(id.length - 10)).get().then(e => {
+    fetch(id, {
+      method: 'get',
+      headers: {
+        'Authorization': 'Bearer ' + keys.eventbriteAPIKey,
+      }
+    }).then((resp) => resp.json()).then(data => {
+        if (data.error) {
+          console.error(data.error, data.error_description, 'eventbrite fetch')
+        } else {
 
-            const person = {
-              "resource_uri": i.resource_uri,
-              "id": i.id,
-              "changed": i.changed,
-              "created": i.created,
-              "quantity": i.quantity,
-              "variant_id": i.variant_id,
-              "profile": i.profile,
-              // "phone": i.mo,
-              gender: i.gender,
-              age: i.age,
-              "birth_date": i.birth_date,
-              "email": i.email,
-              "name": i.name,
-              answers: i.answers,
-              "ticket_class_name": i.ticket_class_name,
-              "event_id": i.event_id,
-              "order_id": i.order_id,
-              "ticket_class_id": i.ticket_class_id,
-              waiverStatus: 0,
-              waiverImage: null,
-              checkedIn: false,
-              onCampus: false,
-              waiverReviewedBy: ''
-            }
-            if (e.exists) {
-              console.log('allready exists but still updating')
+          const i = data
 
-            } else {
-              console.log('doesn\'t exist yet getting added ')
-
-            }
-            db.collection('people').doc(id.substr(id.length - 10)).set(person)
+          const person = {
+            "resource_uri": i.resource_uri,
+            "id": i.id,
+            "changed": i.changed,
+            "created": i.created,
+            "quantity": i.quantity,
+            "variant_id": i.variant_id,
+            "profile": i.profile,
+            // "phone": i.mo,
+            gender: i.gender,
+            age: i.age,
+            "birth_date": i.birth_date,
+            "email": i.email,
+            "name": i.name,
+            answers: i.answers,
+            "ticket_class_name": i.ticket_class_name,
+            "event_id": i.event_id,
+            "order_id": i.order_id,
+            "ticket_class_id": i.ticket_class_id,
+            waiverStatus: 0,
+            waiverImage: null,
+            checkedIn: false,
+            onCampus: false,
+            waiverReviewedBy: ''
           }
+          if (e.exists) {
+            console.log('allready exists but still updating')
 
+          } else {
+            console.log('doesn\'t exist yet getting added ')
 
+          }
+          db.collection('people').doc(id.substr(id.length - 10)).set(person)
         }
-      )
 
 
-    });
-  } else {
-    console.log(body)
-  }
+      }
+    )
+
+
+  });
+
 
 });
 const server = app.listen(port, function () {
