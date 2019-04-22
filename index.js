@@ -105,6 +105,17 @@ app.use(bodyParser.json());
 app.get('/', (req, res) => {
   res.send('HELLO')
 })
+app.get('/api/v1/updateEventbrite', (req, res) => {
+  console.log('got a request to run eventbrite', req.get('host'))
+
+  res.status(200)
+  res.send('updating')
+  res.end()
+  updateFirebaseWithNewEventbriteData().then(e => {
+    console.log('updated FB from eventbrite')
+  })
+
+})
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   console.info('recived')
   res.status(200);
