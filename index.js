@@ -2,6 +2,7 @@ const keys = require('./private/api-keys.json')
 const admin = require("firebase-admin");
 const fetch = require('node-fetch');
 const fs = require('fs')
+const nodemailer = require("nodemailer");
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
@@ -109,14 +110,14 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-/*  fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e) => {
-    console.log(e)
-  })*/
+  /*  fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e) => {
+      console.log(e)
+    })*/
   if (body.config.action === "attendee.updated") {
     let url = body.api_url
-  //  console.log('edited: ' + url);
+    //  console.log('edited: ' + url);
     let id = url.substr(url.length - 11)
-  //  console.log(url, id, 'url,id')
+    //  console.log(url, id, 'url,id')
 
     fetch(url, {
       method: 'get',
@@ -155,20 +156,40 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             onCampus: false,
             waiverReviewedBy: ''
           }
-        //  console.log('person', person)
-        //  fs.writeFile('./private/samplePerson.json', JSON.stringify(person), (e) => {})
-        //  fs.writeFile('./private/samplePersonApiReturn.json', JSON.stringify(data), (e) => {})
+          //  console.log('person', person)
+          //  fs.writeFile('./private/samplePerson.json', JSON.stringify(person), (e) => {})
+          //  fs.writeFile('./private/samplePersonApiReturn.json', JSON.stringify(data), (e) => {})
           db.collection('people').doc(person.id).get().then(e => {
             if (e.exists) {
               console.log('exists on fb')
             } else {
               console.log('doesnt exist on fb')
+              //send emails here
+
+              let transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: keys.gmail
+              });
+              let mailOptions = {
+                from: keys.gmail.user,
+                to: person.email,
+                subject: 'Welcome To Hyphen-Hacks! One more step to complete your application',
+                text: `Please complete this waiver: https://waiver.hyphen-hacks.com/${person.id}`
+              };
+              transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                  console.log(error);
+                } else {
+                  console.log('Email sent ' + info.response, person.email);
+                }
+              });
 
             }
             db.collection('people').doc(person.id).set(person).then((e) => {
-              console.log( 'written? to fb')
+              console.log('written? to fb')
             })
           });
+
 
         }
       }
