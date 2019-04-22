@@ -2,7 +2,7 @@ const keys = require('./private/api-keys.json')
 const admin = require("firebase-admin");
 const fetch = require('node-fetch');
 const fs = require('fs')
-const nodemailer = require("nodemailer");
+
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
@@ -166,23 +166,40 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
               console.log('doesnt exist on fb')
               //send emails here
 
-              let transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: keys.gmail
-              });
-              let mailOptions = {
-                from: keys.gmail.user,
-                to: person.email,
-                subject: 'Welcome To Hyphen-Hacks! One more step to complete your application',
-                text: `Please complete this waiver: https://waiver.hyphen-hacks.com/${person.id}`
+              const mailBody = {
+                "personalizations": [
+                  {
+                    "to": [
+                      {
+                        "email": person.profile.email,
+                        "name": person.name
+                      }
+                    ],
+                    "dynamic_template_data": {
+                      "url": `https://waiver.hyphen-hacks.com/${person.id}`,
+                      "firstName": person.profile.first_name
+                    }
+                  }
+                ],
+                "from": {
+                  "email": "waivers@hyphenhacks.stomprocket.io",
+                  "name": "Ronan at Hyphen Hacks"
+                },
+                "reply_to": {
+                  "email": "hyphenhackslw@gmail.com",
+                  "name": "Ronan F"
+                },
+                "template_id": "d-1fc80d0de2804dc2add7cb7b4c9891d1"
               };
-              transporter.sendMail(mailOptions, function (error, info) {
-                if (error) {
-                  console.log(error);
-                } else {
-                  console.log('Email sent ' + info.response, person.email);
-                }
-              });
+              console.log(JSON.stringify(mailBody))
+              fetch('https://api.sendgrid.com/v3/mail/send', {
+                method: 'post',
+                headers: {
+                  'Authorization': 'Bearer ' + keys.sendGrid,
+                  "content-type": "application/json"
+                },
+                body: JSON.stringify(mailBody)
+              }).catch(e => console.log(e));
 
             }
             db.collection('people').doc(person.id).set(person).then((e) => {

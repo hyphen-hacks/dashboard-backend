@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/hyphen-hacks/dashboard-backend#readme",
   "dependencies": {
+    "@sendgrid/client": "^6.3.0",
+    "@sendgrid/mail": "^6.3.1",
     "express": "^4.16.4",
     "firebase-admin": "^7.3.0",
     "node-fetch": "^2.3.0",
