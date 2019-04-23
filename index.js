@@ -279,7 +279,12 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
                   "email": "hyphenhackslw@gmail.com",
                   "name": "Ronan F"
                 },
-                "template_id": "d-1fc80d0de2804dc2add7cb7b4c9891d1"
+                "template_id": "d-1fc80d0de2804dc2add7cb7b4c9891d1",
+                "tracking_settings": {
+                  "click_tracking": {
+                    'enable': true
+                  }
+                }
               };
               console.log(JSON.stringify(mailBody))
               fetch('https://api.sendgrid.com/v3/mail/send', {
