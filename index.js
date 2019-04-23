@@ -102,6 +102,12 @@ const express = require('express'),
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 app.get('/', (req, res) => {
   res.send('HELLO')
 })
@@ -114,6 +120,79 @@ app.get('/api/v1/updateEventbrite', (req, res) => {
   updateFirebaseWithNewEventbriteData().then(e => {
     console.log('updated FB from eventbrite')
   })
+
+})
+app.post('/api/v1/checkPersonStatus', (req, res) => {
+
+  console.log('got a request to checkPersonStatus', req.get('host'), req.body.id)
+  const id = req.body.id
+  if (id && id.length === 10) {
+    db.collection('people').doc(id).get().then(snap => {
+      if (snap.exists) {
+        let person = snap.data()
+        res.status(200)
+        res.json({
+          person: {
+            id: person.id,
+            waiverStatus: person.waiverStatus
+          }
+        })
+        res.end()
+      } else {
+        res.status(200)
+        res.json({
+          person: false
+        })
+        res.end()
+      }
+    })
+
+  } else {
+    res.status(400)
+    res.json({
+      error: true,
+      type: 'Bad ID',
+      message: 'ID not 10 characters long or does not exist'
+    })
+    res.end()
+  }
+
+
+})
+app.post('/api/v1/attendee/waiverStatus', (req, res) => {
+
+  console.log('got a request for attendee waiverStatus', req.get('host'), req.body.id)
+  const id = req.body.id
+  if (id && id.length === 10) {
+    db.collection('people').doc(id).get().then(snap => {
+      if (snap.exists) {
+        let person = snap.data()
+        res.status(200)
+        res.json({
+         waiverStatus: person.waiverStatus
+        })
+        res.end()
+      } else {
+        res.status(400)
+        res.json({
+          error: true,
+         type: 'Person does not exist',
+          message: 'ID does not correspond to a person in the DB'
+        })
+        res.end()
+      }
+    })
+
+  } else {
+    res.status(400)
+    res.json({
+      error: true,
+      type: 'Bad ID',
+      message: 'ID not 10 characters long or does not exist'
+    })
+    res.end()
+  }
+
 
 })
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
