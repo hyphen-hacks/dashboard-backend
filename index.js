@@ -266,7 +266,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
                       }
                     ],
                     "dynamic_template_data": {
-                      "url": `https://hyphen-hacks.github.io/waiver-upload/#p/${person.id}`,
+                      "url": `https://hyphen-hacks.github.io/waiver-upload/#/p/${person.id}`,
                       "firstName": person.profile.first_name
                     }
                   }
