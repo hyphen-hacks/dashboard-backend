@@ -100,9 +100,9 @@ const express = require('express'),
   app = express(),
   port = 3000;
 
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
@@ -159,6 +159,49 @@ app.post('/api/v1/checkPersonStatus', (req, res) => {
 
 
 })
+app.post('/api/v1/addEmail', (req, res) => {
+  let body = req.body
+  console.log('got a request to update email', req.get('host'))
+  if (body.email) {
+    let apiBody = [
+      {
+        "email": body.email
+      }
+    ];
+    fetch('https://api.sendgrid.com/v3/contactdb/recipients', {
+      method: 'post',
+      headers: {
+        'Authorization': 'Bearer ' + keys.sendGrid,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify(apiBody)
+    }).then(e => {
+      console.log(e)
+      res.status(200)
+      res.send('added ' + body.email)
+      res.end()
+    }).catch(e => {
+      console.log(e)
+      res.status(400)
+      res.json({
+        error: true,
+        type: 'sendgrid error',
+        message: 'Request formatted incorrectly. Make sure there is an email.'
+      })
+      res.end()
+    });
+
+  } else {
+    res.status(400)
+    res.json({
+      error: true,
+      type: 'no email',
+      message: 'Request formatted incorrectly. Make sure there is an email.'
+    })
+    res.end()
+  }
+
+})
 app.post('/api/v1/attendee/waiverStatus', (req, res) => {
 
   console.log('got a request for attendee waiverStatus', req.get('host'), req.body.id)
@@ -169,14 +212,14 @@ app.post('/api/v1/attendee/waiverStatus', (req, res) => {
         let person = snap.data()
         res.status(200)
         res.json({
-         waiverStatus: person.waiverStatus
+          waiverStatus: person.waiverStatus
         })
         res.end()
       } else {
         res.status(400)
         res.json({
           error: true,
-         type: 'Person does not exist',
+          type: 'Person does not exist',
           message: 'ID does not correspond to a person in the DB'
         })
         res.end()
