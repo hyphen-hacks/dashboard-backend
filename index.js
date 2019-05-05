@@ -122,6 +122,29 @@ app.get('/api/v1/updateEventbrite', (req, res) => {
   })
 
 })
+app.post('/api/v1/updateUserName', (req, res) => {
+  console.log('got a request to update Person name', req.get('host'), req.body.name)
+  admin.auth().updateUser(req.body.uid, {
+
+    displayName: req.body.name,
+
+  })
+  .then((userRecord) => {
+    // See the UserRecord reference doc for the contents of userRecord.
+    console.log('Successfully updated user', userRecord.toJSON().email);
+    res.status(200)
+    res.send({success: true})
+    res.end()
+
+  })
+  .catch((error) => {
+    console.log('Error updating user:', error);
+    res.status(500)
+    res.send({error: error})
+    res.end()
+  });
+
+})
 app.post('/api/v1/checkPersonStatus', (req, res) => {
 
   console.log('got a request to checkPersonStatus', req.get('host'), req.body.id)
