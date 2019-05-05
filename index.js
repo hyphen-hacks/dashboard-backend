@@ -145,6 +145,11 @@ app.post('/api/v1/updateUserName', (req, res) => {
   });
 
 })
+app.post('/api/v1/newAdminAccount', (req, res) => {
+  console.log('got a request to create admin account', req.get('host'), req.body.name)
+
+
+})
 app.post('/api/v1/checkPersonStatus', (req, res) => {
 
   console.log('got a request to checkPersonStatus', req.get('host'), req.body.id)
