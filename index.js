@@ -2,12 +2,22 @@ const keys = require('./private/api-keys.json')
 const admin = require("firebase-admin");
 const fetch = require('node-fetch');
 const fs = require('fs')
-
+const uuidv4 = require('uuid/v4');
+const CryptoJS = require("crypto-js");
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
 });
 const db = admin.firestore();
+let apiKeyAuth = uuidv4();
+db.collection('secrets').doc('apiKeyDashboard').set({
+  key: apiKeyAuth,
+  time: Date.now()
+}).then(doc => {
+
+  console.log('auth key intalized', apiKeyAuth)
+})
+
 let eventbriteData = []
 
 function getEventbriteAttendees(url) {
@@ -99,15 +109,10 @@ const express = require('express'),
   bodyParser = require('body-parser'),
   app = express(),
   port = 3000;
-
+const cors = require('cors')
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
-
+app.use(cors())
 app.get('/', (req, res) => {
   res.send('HELLO')
 })
@@ -146,7 +151,58 @@ app.post('/api/v1/updateUserName', (req, res) => {
 
 })
 app.post('/api/v1/newAdminAccount', (req, res) => {
-  console.log('got a request to create admin account', req.get('host'), req.body.name)
+  console.log('got a request to create admin account', req.get('host'), req.body)
+
+
+  const body = req.body;
+  console.log(req.headers.authorization)
+  console.log(req.headers.host.substr(0, 9))
+
+  if (req.connection.encrypted || req.headers.host.substr(0, 9) === 'localhost') {
+    console.log('https good')
+    if (req.headers.authorization === apiKeyAuth) {
+      console.log('api good')
+      const bytes = CryptoJS.AES.decrypt(body.user, apiKeyAuth);
+      const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+      console.log(decryptedData)
+      if (decryptedData.name && decryptedData.email && decryptedData.pass) {
+        admin.auth().createUser({
+          email: decryptedData.email,
+          emailVerified: false,
+          password: decryptedData.pass,
+          displayName: decryptedData.name,
+
+        })
+        .then((userRecord) => {
+          // See the UserRecord reference doc for the contents of userRecord.
+          console.log('Successfully created new user:', userRecord.uid);
+          res.status(200)
+          res.send({success: true, uid: userRecord.uid})
+          res.end()
+        })
+        .catch((error) => {
+          console.log('Error creating new user:', error);
+          res.status(500)
+          res.json({success: false, error: error})
+          res.end()
+        });
+
+      } else {
+        res.status(400)
+        res.send({error: {message: 'make sure that there is an email name and password'}})
+        res.end()
+      }
+
+    } else {
+      res.status(401)
+      res.send({error: {message: 'invalid dashboard api key'}})
+      res.end()
+    }
+  } else {
+    res.status(401)
+    res.send({error: {message: 'make sure request is sent over https'}})
+    res.end()
+  }
 
 
 })
