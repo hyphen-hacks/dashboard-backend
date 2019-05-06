@@ -137,7 +137,7 @@ app.post('/api/v1/newAdminAccount', (req, res) => {
   console.log(req.headers.host.substr(0, 9))
   console.log(req.headers.origin.substr(0, 9))
 
-  if (req.connection.encrypted || req.headers.host.substr(0, 9) === 'localhost' || req.headers.origin.substr(0, 9) === 'localhost') {
+  if (req.connection.encrypted || req.headers.host.substr(0, 9) === 'localhost' || req.headers.origin.substr(7, 16) === 'localhost') {
     console.log('https good')
     if (req.headers.authorization === apiKeyAuth) {
       console.log('api good')
