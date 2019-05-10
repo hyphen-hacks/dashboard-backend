@@ -127,7 +127,35 @@ app.get('/api/v1/updateEventbrite', (req, res) => {
   })
 
 })
+app.get('/api/v1/waiverQue', (req, res) => {
+  console.log('got a waiver que request')
+  console.log(req.headers.authorization)
+  if (req.headers.authorization === apiKeyAuth) {
+    console.log('api good')
+    db.collection('people').where("waiverStatus", "==", 1).get().then(snapshot => {
+      console.log('gotten snapshot', snapshot.empty)
+      let waiverQue = []
+      snapshot.forEach(person => {
+        // console.log('snapshot',person.id, person.data().profile.name)
+        waiverQue.push(person.id)
+      })
+      res.status(200)
+      res.send({success: true, que: waiverQue})
+      console.log('sent waiver que', waiverQue.length, 'items')
+      res.end()
 
+    }).catch(e => {
+      console.log(e)
+      res.status(500)
+      res.send({error: e, success: false})
+      res.end()
+    })
+  } else {
+    res.status(401)
+    res.send({error: {message: 'invalid dashboard api key'}})
+    res.end()
+  }
+})
 app.post('/api/v1/newAdminAccount', (req, res) => {
   console.log('got a request to create admin account', req.get('host'), req.body)
 
