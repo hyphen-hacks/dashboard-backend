@@ -114,7 +114,76 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cors())
 app.get('/', (req, res) => {
+  res.redirect(301, 'https://hyphen-hacks.com')
+})
+app.get('/test', (req, res) => {
   res.send('HELLO')
+})
+app.post('/api/v1/sendEmail', (req, res) => {
+  console.log('got a request to send an email', req.body)
+  const body = req.body
+  if (req.headers.authorization === apiKeyAuth) {
+    console.log('api good')
+    if (body.type === 'waiverAccepted') {
+      if (body.name && body.email) {
+        const mailBody = {
+          "personalizations": [
+            {
+              "to": [
+                {
+                  "email": body.email,
+                  "name": body.name
+                }
+              ],
+              "dynamic_template_data": {
+                "firstName": body.name
+              }
+            }
+          ],
+          "from": {
+            "email": "noreply@hyphen-hacks.com",
+            "name": "Ronan at Hyphen Hacks"
+          },
+          "reply_to": {
+            "email": "support@hyphen-hacks.com",
+            "name": "Ronan"
+          },
+          "template_id": "d-ba90d9bb312d40e197333692ca59e9ca",
+          "tracking_settings": {
+            "click_tracking": {
+              'enable': true
+            }
+          }
+        };
+        console.log(JSON.stringify(mailBody))
+        fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'post',
+          headers: {
+            'Authorization': 'Bearer ' + keys.sendGrid,
+            "content-type": "application/json"
+          },
+          body: JSON.stringify(mailBody)
+        }).then(() =>{
+          res.status(200)
+          res.send({success: true})
+          res.end()
+        }).catch(e => {
+          console.log(e)
+          res.status(500)
+          res.send({error: e})
+          res.end()
+        });
+      } else {
+        res.status(400)
+        res.send({error: {message: 'invalid request, must have email and name'}})
+        res.end()
+      }
+    }
+  } else {
+    res.status(401)
+    res.send({error: {message: 'invalid dashboard api key'}})
+    res.end()
+  }
 })
 app.get('/api/v1/updateEventbrite', (req, res) => {
   console.log('got a request to run eventbrite', req.get('host'))
@@ -406,11 +475,11 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
                   }
                 ],
                 "from": {
-                  "email": "waivers@hyphenhacks.stomprocket.io",
+                  "email": "noreply@hyphen-hacks.com",
                   "name": "Ronan at Hyphen Hacks"
                 },
                 "reply_to": {
-                  "email": "hyphenhackslw@gmail.com",
+                  "email": "support@hyphen-hacks.com",
                   "name": "Ronan F"
                 },
                 "template_id": "d-1fc80d0de2804dc2add7cb7b4c9891d1",
