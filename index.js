@@ -346,7 +346,7 @@ app.post('/api/v1/addEmail', (req, res) => {
       },
       body: JSON.stringify(apiBody)
     }).then(e => {
-     // console.log(e)
+      console.log('added ' + body.email)
       res.status(200)
       res.send('added ' + body.email)
       res.end()
