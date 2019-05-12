@@ -178,6 +178,10 @@ app.post('/api/v1/sendEmail', (req, res) => {
         res.send({error: {message: 'invalid request, must have email and name'}})
         res.end()
       }
+    } else {
+      res.status(400)
+      res.send({error: {message: 'invalid request, must have an email type'}})
+      res.end()
     }
   } else {
     res.status(401)
