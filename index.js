@@ -331,7 +331,7 @@ app.post('/api/v1/checkPersonStatus', (req, res) => {
 })
 app.post('/api/v1/addEmail', (req, res) => {
   let body = req.body
-  console.log('got a request to update email', req.get('host'))
+  console.log('got a request to update email', body.email)
   if (body.email) {
     let apiBody = [
       {
@@ -346,7 +346,7 @@ app.post('/api/v1/addEmail', (req, res) => {
       },
       body: JSON.stringify(apiBody)
     }).then(e => {
-      console.log(e)
+     // console.log(e)
       res.status(200)
       res.send('added ' + body.email)
       res.end()
