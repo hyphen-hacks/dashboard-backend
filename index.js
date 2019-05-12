@@ -120,7 +120,7 @@ app.get('/test', (req, res) => {
   res.send('HELLO')
 })
 app.post('/api/v1/sendEmail', (req, res) => {
-  console.log('got a request to send an email', req.body)
+  console.log('got a request to send an email', req.body, req.origin)
   const body = req.body
   if (req.headers.authorization === apiKeyAuth) {
     console.log('api good')
