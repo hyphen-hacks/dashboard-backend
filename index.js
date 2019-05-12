@@ -4,6 +4,11 @@ const fetch = require('node-fetch');
 const fs = require('fs')
 const uuidv4 = require('uuid/v4');
 const CryptoJS = require("crypto-js");
+const whitelist = ['/hyphen-hacks\\.com$/', 'http://localhost:8080']
+const corsOptions = {
+  origin: whitelist,
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
@@ -112,7 +117,7 @@ const express = require('express'),
 const cors = require('cors')
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-app.use(cors())
+app.use(cors(corsOptions))
 app.get('/', (req, res) => {
   res.redirect(301, 'https://hyphen-hacks.com')
 })
