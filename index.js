@@ -23,7 +23,12 @@ db.collection('secrets').doc('apiKeyDashboard').set({
 
   console.log('auth key intalized', apiKeyAuth)
 })
-
+db.collection('secrets').doc('apiKeyDashboard').onSnapshot(docSnapshot => {
+  console.log(`API key Updated: ${docSnapshot.data().key}`);
+  apiKeyAuth = docSnapshot.data().key
+}, err => {
+  console.log(`Encountered error: ${err}`);
+});
 let eventbriteData = []
 
 function getEventbriteAttendees(url) {
@@ -169,7 +174,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
             "content-type": "application/json"
           },
           body: JSON.stringify(mailBody)
-        }).then(() =>{
+        }).then(() => {
           res.status(200)
           res.send({success: true})
           res.end()
@@ -303,18 +308,27 @@ app.post('/api/v1/checkPersonStatus', (req, res) => {
         let person = snap.data()
         db.collection('secrets').doc('eventbriteTicketTypes').get().then(snap => {
           const ticketTypes = snap.data()
-        db.collection('publicRefs').doc(ticketTypes[person['ticket_class_id']].waiverRef).get().then(waiverInfo => {
-          const downloadURL = waiverInfo.data().download
-          res.status(200)
-          res.json({
-            person: {
-              id: person.id,
-              waiverStatus: person.waiverStatus,
-              waiverDownloadURL: downloadURL
+          console.log(ticketTypes[person['ticket_class_id']].waiverRef, 'ref getting from FB')
+          db.collection('publicRefs').doc(ticketTypes[person['ticket_class_id']].waiverRef).get().then(waiverInfo => {
+            console.log(waiverInfo.exists)
+            if (waiverInfo.exists) {
+              const downloadURL = waiverInfo.data().download
+              res.status(200)
+              res.json({
+                person: {
+                  id: person.id,
+                  waiverStatus: person.waiverStatus,
+                  waiverDownloadURL: downloadURL
+                }
+              })
+              res.end()
+            } else {
+
+              res.status(500)
+              res.end()
             }
+
           })
-          res.end()
-        })
 
         })
 
