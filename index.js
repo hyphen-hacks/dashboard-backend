@@ -297,17 +297,27 @@ app.post('/api/v1/checkPersonStatus', (req, res) => {
   console.log('got a request to checkPersonStatus', req.get('host'), req.body.id)
   const id = req.body.id
   if (id && id.length === 10) {
+
     db.collection('people').doc(id).get().then(snap => {
       if (snap.exists) {
         let person = snap.data()
-        res.status(200)
-        res.json({
-          person: {
-            id: person.id,
-            waiverStatus: person.waiverStatus
-          }
+        db.collection('secrets').doc('eventbriteTicketTypes').get().then(snap => {
+          const ticketTypes = snap.data()
+        db.collection('publicRefs').doc(ticketTypes[person['ticket_class_id']].waiverRef).get().then(waiverInfo => {
+          const downloadURL = waiverInfo.data().download
+          res.status(200)
+          res.json({
+            person: {
+              id: person.id,
+              waiverStatus: person.waiverStatus,
+              waiverDownloadURL: downloadURL
+            }
+          })
+          res.end()
         })
-        res.end()
+
+        })
+
       } else {
         res.status(200)
         res.json({
