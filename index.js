@@ -111,11 +111,11 @@ const updateFirebaseWithNewEventbriteData = async () => {
   console.log('done updating')
   return true
 }
-
+/*
 updateFirebaseWithNewEventbriteData().then(e => {
   console.log('next')
 })
-
+*/
 const express = require('express'),
   bodyParser = require('body-parser'),
   app = express(),
