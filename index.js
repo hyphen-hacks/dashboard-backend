@@ -456,8 +456,10 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
           console.error(data.error, data.error_description, 'eventbrite fetch')
         } else {
 
-          const i = data
-
+          const i = data;
+          fs.writeFile(`./private/eventbriteapinewperson-${new Date()}.json`, JSON.stringify(i), (e) => {
+            console.log(e)
+          })
           const person = {
             "resource_uri": i.resource_uri,
             "id": i.id,
