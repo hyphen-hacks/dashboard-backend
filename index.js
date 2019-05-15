@@ -263,13 +263,15 @@ app.post('/api/v1/waiveruploaded', (req, res) => {
         })
       } else {
         res.status(400)
-        res.json({error: {message: 'person doesnt exist'}, success: false})
+        console.log('person doesnt exists')
+        res.send({error: {message: 'person doesnt exist'}, success: false})
         res.end()
       }
     })
   } else {
+    console.log('error must contain all option')
     res.status(400)
-    res.json({error: {message: 'invalid request must contain all option'}, success: false})
+    res.send({error: {message: 'invalid request must contain all option'}, success: false})
     res.end()
   }
 })
