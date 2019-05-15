@@ -240,6 +240,39 @@ app.get('/api/v1/waiverQue', (req, res) => {
     res.end()
   }
 })
+app.post('/api/v1/waiveruploaded', (req, res) => {
+  console.log('got a request to update waiver info', req.body)
+  const body = req.body;
+  if (body.id && body.waiverStatus && body.waiverImage && body.waiverUploaded) {
+    db.collection('people').doc(body.id).get().then(doc => {
+
+      if (doc.exists) {
+
+        console.log('person exists')
+
+       let person = doc.data();
+        person.waiverStatus = body.waiverStatus;
+        person.waiverImage = body.waiverImage
+        person.waiverUploaded = body.waiverUploaded
+        db.collection('people').doc(body.id).set(person).then(() => {
+          console.log('status updated')
+          res.status(200)
+          res.json({success: true})
+          res.end()
+
+        })
+      } else {
+        res.status(400)
+        res.json({error: {message: 'person doesnt exist'}, success: false})
+        res.end()
+      }
+    })
+  } else {
+    res.status(400)
+    res.json({error: {message: 'invalid request must contain all option'}, success: false})
+    res.end()
+  }
+})
 app.post('/api/v1/newAdminAccount', (req, res) => {
   console.log('got a request to create admin account', req.get('host'), req.body)
 
