@@ -190,7 +190,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
         res.end()
       }
     } else if (body.type === 'waiverDeclined') {
-      console.log('sending decline email')
+      console.log('sending decline email', body)
       if (body.name && body.email && body.message && body.url) {
         const mailBody = {
           "personalizations": [
