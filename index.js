@@ -189,6 +189,63 @@ app.post('/api/v1/sendEmail', (req, res) => {
         res.send({error: {message: 'invalid request, must have email and name'}})
         res.end()
       }
+    } else if (body.type === 'waiverDeclined') {
+      console.log('sending decline email')
+      if (body.name && body.email && body.message && body.url) {
+        const mailBody = {
+          "personalizations": [
+            {
+              "to": [
+                {
+                  "email": body.email,
+                  "name": body.name
+                }
+              ],
+              "dynamic_template_data": {
+                "firstName": body.name,
+                "message": body.message,
+                "url": body.url
+              }
+            }
+          ],
+          "from": {
+            "email": "noreply@hyphen-hacks.com",
+            "name": "Hyphen-Hacks Team"
+          },
+          "reply_to": {
+            "email": "team@hyphen-hacks.com",
+            "name": "Hyphen-Hacks Team"
+          },
+          "template_id": "d-cf571f96327a46bb969d9f207826ee57",
+          "tracking_settings": {
+            "click_tracking": {
+              'enable': true
+            }
+          }
+        };
+        console.log(JSON.stringify(mailBody))
+        fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'post',
+          headers: {
+            'Authorization': 'Bearer ' + keys.sendGrid,
+            "content-type": "application/json"
+          },
+          body: JSON.stringify(mailBody)
+        }).then(() => {
+          res.status(200)
+          res.send({success: true})
+          res.end()
+        }).catch(e => {
+          console.log(e)
+          res.status(500)
+          res.send({error: e})
+          res.end()
+        });
+      } else {
+        res.status(400)
+        res.send({error: {message: 'invalid request, must have email and name and a message'}})
+        res.end()
+      }
     } else {
       res.status(400)
       res.send({error: {message: 'invalid request, must have an email type'}})
@@ -250,7 +307,7 @@ app.post('/api/v1/waiveruploaded', (req, res) => {
 
         console.log('person exists')
 
-       let person = doc.data();
+        let person = doc.data();
         person.waiverStatus = body.waiverStatus;
         person.waiverImage = body.waiverImage
         person.waiverUploaded = body.waiverUploaded
