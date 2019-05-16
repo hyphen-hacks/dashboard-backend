@@ -348,7 +348,7 @@ app.post('/api/v1/newAdminAccount', (req, res) => {
       console.log('api good')
       const bytes = CryptoJS.AES.decrypt(body.user, apiKeyAuth);
       const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-      console.log(decryptedData)
+      console.log(decryptedData.name, decryptedData.email)
       if (decryptedData.name && decryptedData.email && decryptedData.pass) {
         admin.auth().createUser({
           email: decryptedData.email,
