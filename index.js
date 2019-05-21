@@ -526,7 +526,7 @@ app.post('/api/v1/attendee/waiverStatus', (req, res) => {
 
 })
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
-  console.info('recived')
+  console.info('recived eventbrite webhook attendee updated')
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
