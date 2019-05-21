@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const fs = require('fs')
 const uuidv4 = require('uuid/v4');
 const CryptoJS = require("crypto-js");
-const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com']
+const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313']
 const corsOptions = {
   origin: whitelist,
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
