@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const fs = require('fs')
 const uuidv4 = require('uuid/v4');
 const CryptoJS = require("crypto-js");
-const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080']
+const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com']
 const corsOptions = {
   origin: whitelist,
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
@@ -448,7 +448,7 @@ app.post('/api/v1/checkPersonStatus', (req, res) => {
 })
 app.post('/api/v1/addEmail', (req, res) => {
   let body = req.body
-  console.log('got a request to update email', body.email)
+  console.log('got a request to add email to list', body.email)
   if (body.email) {
     let apiBody = [
       {
