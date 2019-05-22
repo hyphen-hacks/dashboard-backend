@@ -562,7 +562,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             "variant_id": i.variant_id,
             "profile": i.profile,
             // "phone": i.mo,
-            gender: i.profile.gender,
+            "gender": i.answers[4],
             age: i.profile.age,
             "birth_date": i.profile.birth_date,
             "email": i.profile.email,
@@ -578,9 +578,11 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             onCampus: false,
             waiverReviewedBy: ''
           }
-           console.log('person', person)
-            fs.writeFile('./private/samplePerson.json', JSON.stringify(person), (e) => {})
-            fs.writeFile('./private/samplePersonApiReturn.json', JSON.stringify(data), (e) => {})
+          console.log('person', person)
+          fs.writeFile('./private/samplePerson.json', JSON.stringify(person), (e) => {
+          })
+          fs.writeFile('./private/samplePersonApiReturn.json', JSON.stringify(data), (e) => {
+          })
           db.collection('people').doc(person.id).get().then(e => {
             if (e.exists) {
               console.log('exists on fb')
