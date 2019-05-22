@@ -5,11 +5,14 @@ const fs = require('fs')
 const uuidv4 = require('uuid/v4');
 const CryptoJS = require("crypto-js");
 const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313']
+const moment = require('moment')
 const corsOptions = {
   origin: whitelist,
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
-console.log('cors whitlist', whitelist)
+const version = require('./package').version
+console.log(`Hyphen-Hacks Server API Init ${moment().format('MMM Do, HH:mm:ss')} v${version}`)
+//console.log('cors whitlist', whitelist)
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
@@ -667,6 +670,6 @@ const server = app.listen(port, function () {
   const host = server.address().address
   const port = server.address().port
 
-  console.log('Example app listening at http://%s:%s', host, port)
+  console.log('API initialized and listening')
 
 });
