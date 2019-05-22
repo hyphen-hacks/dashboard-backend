@@ -563,7 +563,6 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             "profile": i.profile,
             // "phone": i.mo,
             "gender": i.answers[4],
-            age: i.profile.age,
             "birth_date": i.profile.birth_date,
             "email": i.profile.email,
             "name": i.profile.name,
