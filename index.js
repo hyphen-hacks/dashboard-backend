@@ -525,12 +525,19 @@ app.post('/api/v1/attendee/waiverStatus', (req, res) => {
 
 
 })
-app.post('/api/v1/orderUpdated', function (req, res) {
+app.post('/api/v1/orderCancled', function (req, res) {
   console.info('recived eventbrite webhook order updated')
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-  console.log(body)
+  console.log(body.action)
+  if (body.action === 'order.refunded') {
+    console.info('Order refunded')
+    console.log(body)
+  } else if (body.action === 'order.updated') {
+    console.info('Order updated')
+    console.log(body)
+  }
 })
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   console.info('recived eventbrite webhook attendee updated')
