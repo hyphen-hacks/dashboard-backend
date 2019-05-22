@@ -526,17 +526,15 @@ app.post('/api/v1/attendee/waiverStatus', (req, res) => {
 
 })
 app.post('/api/v1/orderCancled', function (req, res) {
-  console.info('recived eventbrite webhook order updated')
+  console.info('recived eventbrite webhook order Cancled')
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-  console.log(body.action)
   if (body.action === 'order.refunded') {
     console.info('Order refunded')
     console.log(body)
-  } else if (body.action === 'order.updated') {
-    console.info('Order updated')
-    console.log(body)
+  } else {
+    console.log('unknown action', body)
   }
 })
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
@@ -544,9 +542,10 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-  /*  fs.writeFile(`./private/eventbriteapi-${new Date()}.json`, JSON.stringify(body), (e) => {
-      console.log(e)
-    })*/
+  console.log(body)
+  fs.writeFile(`./private/eventbriteapiWebhook-${new Date()}.json`, JSON.stringify(body), (e) => {
+    console.log(e)
+  })
   if (body.config.action === "attendee.updated") {
     let url = body.api_url
     //  console.log('edited: ' + url);
@@ -642,14 +641,14 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
                 },
                 body: JSON.stringify(mailBody)
               }).catch(e => console.log(e));
-
+              db.collection('people').doc(person.id).set(person).then((e) => {
+                if (e) {
+                  console.log(e)
+                }
+                console.log('written? to fb')
+              })
             }
-            db.collection('people').doc(person.id).set(person).then((e) => {
-              if (e) {
-                console.log(e)
-              }
-              console.log('written? to fb')
-            })
+
           });
 
 
