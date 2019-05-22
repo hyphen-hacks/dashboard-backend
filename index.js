@@ -449,6 +449,53 @@ app.post('/api/v1/checkPersonStatus', (req, res) => {
 
 
 })
+app.post('/api/v1/unsubscribeEmail', (req, res) => {
+  let body = req.body
+  console.log('got a request to unsubscribe', body.email)
+  if (body.email) {
+    const email = body.email
+    fetch('https://api.sendgrid.com/v3/contactdb/recipients', {
+      method: 'get',
+      headers: {
+        'Authorization': 'Bearer ' + keys.sendGrid,
+      }
+    }).then(resp => resp.json()).then(resp => {
+      //console.log(resp.recipients)
+      let recipientData = resp.recipients.find((recipient) => {
+        return recipient.email == email
+      })
+      if (recipientData) {
+        console.log('found recipeint ID', recipientData.id)
+        fetch(`https://api.sendgrid.com/v3/contactdb/recipients/${recipientData.id}`, {
+          method: 'delete',
+          headers: {
+            'Authorization': 'Bearer ' + keys.sendGrid,
+          }
+        }).then(resp => {
+          res.status(200)
+          res.json({'success': true})
+          res.end()
+        })
+
+      } else {
+        res.status(400)
+        res.json({error: {message: 'email not in database', type: 'email does not exist'}})
+        res.end()
+      }
+
+    })
+
+
+  } else {
+    res.status(400)
+    res.json({
+      error: true,
+      type: 'no email',
+      message: 'Request formatted incorrectly. Make sure there is an email.'
+    })
+    res.end()
+  }
+})
 app.post('/api/v1/addEmail', (req, res) => {
   let body = req.body
   console.log('got a request to add email to list', body.email)
@@ -469,7 +516,52 @@ app.post('/api/v1/addEmail', (req, res) => {
       console.log('added ' + body.email)
       res.status(200)
       res.send('added ' + body.email)
+      const mailBody = {
+        "personalizations": [
+          {
+            "to": [
+              {
+                "email": body.email,
+                "name": body.email
+              }
+            ],
+            "dynamic_template_data": {
+
+              "unsubscribeUrl": 'https://emails.hyphen-hacks.com/u/' + body.email
+            }
+          }
+        ],
+        "from": {
+          "email": "noreply@hyphen-hacks.com",
+          "name": "Hyphen-Hacks Team"
+        },
+        "reply_to": {
+          "email": "team@hyphen-hacks.com",
+          "name": "Hyphen-Hacks Team"
+        },
+        "template_id": "d-ba94610139cc42d58137401f35989670",
+        "tracking_settings": {
+          "click_tracking": {
+            'enable': true
+          }
+        }
+      };
+      console.log(JSON.stringify(mailBody))
+      fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'post',
+        headers: {
+          'Authorization': 'Bearer ' + keys.sendGrid,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(mailBody)
+      }).then(() => {
+        console.log('confirmation email list sent')
+      }).catch(e => {
+        console.log(e)
+
+      });
       res.end()
+
     }).catch(e => {
       console.log(e)
       res.status(400)
