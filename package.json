@@ -1,11 +1,11 @@
 {
   "name": "hyphen-hacks-admind-dashboard-backend",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Backend for Hyphen Hacks 2019",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "copyApiKeys": "scp ./private/api-keys.json root@104.248.214.247:~/dashboard-backend/private/api-keys.json"
+    "copyApiKeys": "scp ./private/api-keys.json root@138.68.224.88:~/dashboard-backend/private/api-keys.json"
   },
   "repository": {
     "type": "git",
