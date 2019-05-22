@@ -618,7 +618,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
                   }
                 }
               };
-              console.log(JSON.stringify(mailBody))
+              console.log('Sending welcome email to', person.profile.email)
               fetch('https://api.sendgrid.com/v3/mail/send', {
                 method: 'post',
                 headers: {
@@ -630,6 +630,9 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
 
             }
             db.collection('people').doc(person.id).set(person).then((e) => {
+              if (e) {
+                console.log(e)
+              }
               console.log('written? to fb')
             })
           });
