@@ -6,12 +6,17 @@ const uuidv4 = require('uuid/v4');
 const CryptoJS = require("crypto-js");
 const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313', 'https://emails.hyphen-hacks.com', 'http://emails.hyphen-hacks.com']
 const moment = require('moment')
+let log = require('log4node');
+
+log.reconfigure({level: 'debug', file: './private/logs.log'});
 const corsOptions = {
   origin: whitelist,
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 const version = require('./package').version
-console.log(`Hyphen-Hacks Server API Init ${moment().format('MMM Do, HH:mm:ss')} v${version}`)
+const startTime = moment().format('MMM Do, HH:mm:ss')
+console.log(`Hyphen-Hacks Server API Init ${startTime} v${version}`)
+log.info(`Hyphen-Hacks Server API Init ${startTime} v${version}`)
 //console.log('cors whitlist', whitelist)
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
@@ -24,20 +29,20 @@ db.collection('secrets').doc('apiKeyDashboard').set({
   time: Date.now()
 }).then(doc => {
 
-  console.log('auth key intalized', apiKeyAuth)
+  log.info('auth key intalized', apiKeyAuth)
 })
 db.collection('secrets').doc('apiKeyDashboard').onSnapshot(docSnapshot => {
-  console.log(`API key Updated: ${docSnapshot.data().key}`);
+  log.info(`API key Updated: ${docSnapshot.data().key}`);
   apiKeyAuth = docSnapshot.data().key
 }, err => {
-  console.log(`Encountered error: ${err}`);
+  log.error(`Encountered error updating api key: ${err}`);
 });
 let eventbriteData = []
 
 function getEventbriteAttendees(url) {
   return new Promise(
     function (resolve, reject) {
-      console.log('fetching ' + url)
+      log.info('fetching eventbrite attendess at ' + url)
       fetch(url, {
         method: 'get',
         headers: {
@@ -45,7 +50,7 @@ function getEventbriteAttendees(url) {
         }
       }).then((resp) => resp.json()).then(data => {
         if (data.error) {
-          console.error(data.error, data.error_description, 'eventbrite fetch')
+          log.error(data.error, data.error_description, 'eventbrite fetch')
         } else {
           const cleanedAttendees = data.attendees.map(i => {
             const b = {
@@ -93,7 +98,7 @@ function getEventbriteAttendees(url) {
 }
 
 const updateFirebaseWithNewEventbriteData = async () => {
-  console.log('updating firebase with eventbrite...')
+  log.info('updating firebase with eventbrite...')
   await getEventbriteAttendees(keys.eventbriteURL).then((e) => {
     fs.writeFile('./private/sample-api-return.json', JSON.stringify(eventbriteData), () => {
     })
@@ -105,13 +110,13 @@ const updateFirebaseWithNewEventbriteData = async () => {
         } else {
           let e = JSON.stringify(i)
           peopleRef.doc(i.id).set(JSON.parse(e));
-          console.log(`added ${i.id}`)
+          log.info(`added ${i.id} to firebase`)
         }
       });
 
     })
   })
-  console.log('done updating')
+  log.info('done updating firebase')
   return true
 }
 /*
@@ -134,10 +139,10 @@ app.get('/test', (req, res) => {
   res.send('HELLO')
 })
 app.post('/api/v1/sendEmail', (req, res) => {
-  console.log('got a request to send an email', req.body, req.origin)
+  log.info('got a request to send an email', req.body, req.origin)
   const body = req.body
   if (req.headers.authorization === apiKeyAuth) {
-    console.log('api good')
+    log.info('api good')
     if (body.type === 'waiverAccepted') {
       if (body.name && body.email) {
         const mailBody = {
@@ -169,7 +174,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
             }
           }
         };
-        console.log(JSON.stringify(mailBody))
+        log.info(JSON.stringify(mailBody))
         fetch('https://api.sendgrid.com/v3/mail/send', {
           method: 'post',
           headers: {
@@ -182,7 +187,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
           res.send({success: true})
           res.end()
         }).catch(e => {
-          console.log(e)
+          log.error(e)
           res.status(500)
           res.send({error: e})
           res.end()
@@ -193,7 +198,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
         res.end()
       }
     } else if (body.type === 'waiverDeclined') {
-      console.log('sending decline email', body)
+      log.info('sending decline email', body)
       if (body.name && body.email && body.message && body.url) {
         const mailBody = {
           "personalizations": [
@@ -226,7 +231,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
             }
           }
         };
-        console.log(JSON.stringify(mailBody))
+        log.info(JSON.stringify(mailBody))
         fetch('https://api.sendgrid.com/v3/mail/send', {
           method: 'post',
           headers: {
@@ -235,49 +240,52 @@ app.post('/api/v1/sendEmail', (req, res) => {
           },
           body: JSON.stringify(mailBody)
         }).then(() => {
+          log.info('Success! Mail sent to' + body.email)
           res.status(200)
           res.send({success: true})
           res.end()
         }).catch(e => {
-          console.log(e)
+          log.error(e)
           res.status(500)
           res.send({error: e})
           res.end()
         });
       } else {
+        log.error('invalid request, must have email and name and a message')
         res.status(400)
         res.send({error: {message: 'invalid request, must have email and name and a message'}})
         res.end()
       }
     } else {
+      log.error('invalid request, must have an email type')
       res.status(400)
       res.send({error: {message: 'invalid request, must have an email type'}})
       res.end()
     }
   } else {
+    log.error('invalid dashboard api key')
     res.status(401)
     res.send({error: {message: 'invalid dashboard api key'}})
     res.end()
   }
 })
 app.get('/api/v1/updateEventbrite', (req, res) => {
-  console.log('got a request to run eventbrite', req.get('host'))
-
+  log.info('got a request to run eventbrite', req.get('host'))
   res.status(200)
   res.send('updating')
   res.end()
   updateFirebaseWithNewEventbriteData().then(e => {
-    console.log('updated FB from eventbrite')
+    log.info('updated FB from eventbrite')
   })
 
 })
 app.get('/api/v1/waiverQue', (req, res) => {
-  console.log('got a waiver que request')
-  console.log(req.headers.authorization)
+  log.info('got a waiver que request')
+  log.info(req.headers.authorization)
   if (req.headers.authorization === apiKeyAuth) {
-    console.log('api good')
+    log.info('api good')
     db.collection('people').where("waiverStatus", "==", 1).get().then(snapshot => {
-      console.log('gotten snapshot', snapshot.empty)
+      log.info('gotten snapshot', snapshot.empty)
       let waiverQue = []
       snapshot.forEach(person => {
         // console.log('snapshot',person.id, person.data().profile.name)
@@ -285,37 +293,38 @@ app.get('/api/v1/waiverQue', (req, res) => {
       })
       res.status(200)
       res.send({success: true, que: waiverQue})
-      console.log('sent waiver que', waiverQue.length, 'items')
+      log.info('sent waiver que', waiverQue.length, 'items')
       res.end()
 
     }).catch(e => {
-      console.log(e)
+      log.error(e)
       res.status(500)
       res.send({error: e, success: false})
       res.end()
     })
   } else {
+    log.error('invalid dashboard api key')
     res.status(401)
     res.send({error: {message: 'invalid dashboard api key'}})
     res.end()
   }
 })
 app.post('/api/v1/waiveruploaded', (req, res) => {
-  console.log('got a request to update waiver info', req.body)
+  log.info('got a request to update waiver info', req.body)
   const body = req.body;
   if (body.id && body.waiverStatus && body.waiverImage && body.waiverUploaded) {
     db.collection('people').doc(body.id).get().then(doc => {
 
       if (doc.exists) {
 
-        console.log('person exists')
+        log.info('person exists')
 
         let person = doc.data();
         person.waiverStatus = body.waiverStatus;
         person.waiverImage = body.waiverImage
         person.waiverUploaded = body.waiverUploaded
         db.collection('people').doc(body.id).set(person).then(() => {
-          console.log('status updated')
+          log.info('status updated')
           res.status(200)
           res.json({success: true})
           res.end()
@@ -323,35 +332,35 @@ app.post('/api/v1/waiveruploaded', (req, res) => {
         })
       } else {
         res.status(400)
-        console.log('person doesnt exists')
+        log.info('person doesnt exists')
         res.send({error: {message: 'person doesnt exist'}, success: false})
         res.end()
       }
     })
   } else {
-    console.log('error must contain all option')
+    log.error('error must contain all option')
     res.status(400)
     res.send({error: {message: 'invalid request must contain all option'}, success: false})
     res.end()
   }
 })
 app.post('/api/v1/newAdminAccount', (req, res) => {
-  console.log('got a request to create admin account', req.get('host'), req.body)
+  log.info('got a request to create admin account', req.get('host'), req.body)
 
 
   const body = req.body;
-  console.log(req.headers.authorization)
-  console.log(req.headers.host.substr(0, 9))
-  console.log(req.headers.origin.substr(0, 16))
-  console.log(req.connection.encrypted)
+  log.info(req.headers.authorization)
+  log.info(req.headers.host.substr(0, 9))
+  log.info(req.headers.origin.substr(0, 16))
+  log.info(req.connection.encrypted)
 
   if (req.connection.encrypted || req.headers.host.substr(0, 9) === 'localhost' || req.headers.origin.substr(0, 16) === 'http://localhost' || req.headers.origin.substr(0, 6) === 'https:') {
-    console.log('https good')
+    log.info('https good')
     if (req.headers.authorization === apiKeyAuth) {
-      console.log('api good')
+      log.info('api good')
       const bytes = CryptoJS.AES.decrypt(body.user, apiKeyAuth);
       const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-      console.log(decryptedData.name, decryptedData.email)
+      log.info(decryptedData.name, decryptedData.email)
       if (decryptedData.name && decryptedData.email && decryptedData.pass) {
         admin.auth().createUser({
           email: decryptedData.email,
@@ -362,30 +371,33 @@ app.post('/api/v1/newAdminAccount', (req, res) => {
         })
         .then((userRecord) => {
           // See the UserRecord reference doc for the contents of userRecord.
-          console.log('Successfully created new user:', userRecord.uid);
+          log.info('Successfully created new user:', userRecord.uid);
           res.status(200)
           res.send({success: true, uid: userRecord.uid})
           res.end()
         })
         .catch((error) => {
-          console.log('Error creating new user:', error);
+          log.error('Error creating new user:', error);
           res.status(500)
           res.json({success: false, error: error})
           res.end()
         });
 
       } else {
+        log.error('make sure that there is an email name and password')
         res.status(400)
         res.send({error: {message: 'make sure that there is an email name and password'}})
         res.end()
       }
 
     } else {
+      log.error('invalid dashboard api key')
       res.status(401)
       res.send({error: {message: 'invalid dashboard api key'}})
       res.end()
     }
   } else {
+    log.error('not sent over https')
     res.status(401)
     res.send({error: {message: 'make sure request is sent over https'}})
     res.end()
@@ -395,7 +407,7 @@ app.post('/api/v1/newAdminAccount', (req, res) => {
 })
 app.post('/api/v1/checkPersonStatus', (req, res) => {
 
-  console.log('got a request to checkPersonStatus', req.get('host'), req.body.id)
+  log.info('got a request to checkPersonStatus', req.get('host'), req.body.id)
   const id = req.body.id
   if (id && id.length === 10) {
 
@@ -404,9 +416,9 @@ app.post('/api/v1/checkPersonStatus', (req, res) => {
         let person = snap.data()
         db.collection('secrets').doc('eventbriteTicketTypes').get().then(snap => {
           const ticketTypes = snap.data()
-          console.log(ticketTypes[person['ticket_class_id']].waiverRef, 'ref getting from FB')
+          log.info(ticketTypes[person['ticket_class_id']].waiverRef, 'ref getting from FB')
           db.collection('publicRefs').doc(ticketTypes[person['ticket_class_id']].waiverRef).get().then(waiverInfo => {
-            console.log(waiverInfo.exists)
+            log.info(waiverInfo.exists)
             if (waiverInfo.exists) {
               const downloadURL = waiverInfo.data().download
               res.status(200)
@@ -451,7 +463,7 @@ app.post('/api/v1/checkPersonStatus', (req, res) => {
 })
 app.post('/api/v1/unsubscribeEmail', (req, res) => {
   let body = req.body
-  console.log('got a request to unsubscribe', body.email)
+  log.info('got a request to unsubscribe', body.email)
   if (body.email) {
     const email = body.email
     fetch('https://api.sendgrid.com/v3/contactdb/recipients', {
@@ -465,7 +477,7 @@ app.post('/api/v1/unsubscribeEmail', (req, res) => {
         return recipient.email == email
       })
       if (recipientData) {
-        console.log('found recipeint ID', recipientData.id)
+        log.info('found recipeint ID', recipientData.id)
         fetch(`https://api.sendgrid.com/v3/contactdb/recipients/${recipientData.id}`, {
           method: 'delete',
           headers: {
@@ -498,7 +510,7 @@ app.post('/api/v1/unsubscribeEmail', (req, res) => {
 })
 app.post('/api/v1/addEmail', (req, res) => {
   let body = req.body
-  console.log('got a request to add email to list', body.email)
+  log.info('got a request to add email to list', body.email)
   if (body.email) {
     let apiBody = [
       {
@@ -513,7 +525,7 @@ app.post('/api/v1/addEmail', (req, res) => {
       },
       body: JSON.stringify(apiBody)
     }).then(e => {
-      console.log('added ' + body.email)
+      log.info('added ' + body.email)
       res.status(200)
       res.send('added ' + body.email)
       const mailBody = {
@@ -546,7 +558,7 @@ app.post('/api/v1/addEmail', (req, res) => {
           }
         }
       };
-      console.log(JSON.stringify(mailBody))
+      log.info(JSON.stringify(mailBody))
       fetch('https://api.sendgrid.com/v3/mail/send', {
         method: 'post',
         headers: {
@@ -555,15 +567,15 @@ app.post('/api/v1/addEmail', (req, res) => {
         },
         body: JSON.stringify(mailBody)
       }).then(() => {
-        console.log('confirmation email list sent')
+        log.info('confirmation email list sent')
       }).catch(e => {
-        console.log(e)
+        log.error(e)
 
       });
       res.end()
 
     }).catch(e => {
-      console.log(e)
+      log.error(e)
       res.status(400)
       res.json({
         error: true,
@@ -586,7 +598,7 @@ app.post('/api/v1/addEmail', (req, res) => {
 })
 app.post('/api/v1/attendee/waiverStatus', (req, res) => {
 
-  console.log('got a request for attendee waiverStatus', req.get('host'), req.body.id)
+  log.info('got a request for attendee waiverStatus', req.get('host'), req.body.id)
   const id = req.body.id
   if (id && id.length === 10) {
     db.collection('people').doc(id).get().then(snap => {
@@ -627,9 +639,9 @@ app.post('/api/v1/orderCancled', function (req, res) {
   const body = req.body;
   if (body.action === 'order.refunded') {
     console.info('Order refunded')
-    console.log(body)
+    log.info(body)
   } else {
-    console.log('unknown action', body)
+    log.info('unknown action', body)
   }
 })
 app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
@@ -637,9 +649,9 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
   res.status(200);
   res.send({status: ' reicved and prosessing'});
   const body = req.body;
-  console.log(body)
+  log.info(body)
   fs.writeFile(`./private/eventbriteapiWebhook-${new Date()}.json`, JSON.stringify(body), (e) => {
-    console.log(e)
+    log.error(e)
   })
   if (body.config.action === "attendee.updated") {
     let url = body.api_url
@@ -659,7 +671,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
 
           const i = data;
           fs.writeFile(`./private/eventbriteapinewperson-${new Date()}.json`, JSON.stringify(i), (e) => {
-            console.log(e)
+            log.error(e)
           })
           const person = {
             "resource_uri": i.resource_uri,
@@ -685,16 +697,16 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
             onCampus: false,
             waiverReviewedBy: ''
           }
-          console.log('person', person)
+          log.info('person', person)
           fs.writeFile('./private/samplePerson.json', JSON.stringify(person), (e) => {
           })
           fs.writeFile('./private/samplePersonApiReturn.json', JSON.stringify(data), (e) => {
           })
           db.collection('people').doc(person.id).get().then(e => {
             if (e.exists) {
-              console.log('exists on fb')
+              log.info('exists on fb')
             } else {
-              console.log('doesnt exist on fb')
+              log.info('doesnt exist on fb')
               //send emails here
 
               const mailBody = {
@@ -727,7 +739,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
                   }
                 }
               };
-              console.log('Sending welcome email to', person.profile.email)
+              log.info('Sending welcome email to', person.profile.email)
               fetch('https://api.sendgrid.com/v3/mail/send', {
                 method: 'post',
                 headers: {
@@ -735,12 +747,10 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
                   "content-type": "application/json"
                 },
                 body: JSON.stringify(mailBody)
-              }).catch(e => console.log(e));
+              }).catch(e => log.error(e));
               db.collection('people').doc(person.id).set(person).then((e) => {
-                if (e) {
-                  console.log(e)
-                }
-                console.log('written? to fb')
+
+                log.info('written? to fb')
               })
             }
 
@@ -752,7 +762,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
     )
 
   } else {
-    console.log('other action', body.config.action)
+    log.info('other action', body.config.action)
   }
 
 
@@ -762,6 +772,6 @@ const server = app.listen(port, function () {
   const host = server.address().address
   const port = server.address().port
 
-  console.log('API initialized and listening')
+  log.info('API initialized and listening')
 
 });
