@@ -324,7 +324,7 @@ app.get('/api/v1/waiverQue', (req, res) => {
   } else {
     log.error('invalid dashboard api key')
     res.status(401)
-    res.send({error: {message: 'invalid dashboard api key'}})
+    res.send({error: {message: 'invalid dashboard api key', type: "unauthorized"}})
     res.end()
   }
 })
