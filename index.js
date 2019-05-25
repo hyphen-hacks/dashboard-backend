@@ -15,7 +15,7 @@ const corsOptions = {
 }
 const version = require('./package').version
 const startTime = moment().format('MMM Do, HH:mm:ss')
-console.log(`Hyphen-Hacks Server API Init ${startTime} v${version}`)
+
 log.info(`Hyphen-Hacks Server API Init ${startTime} v${version}`)
 //console.log('cors whitlist', whitelist)
 admin.initializeApp({
@@ -38,7 +38,7 @@ db.collection('secrets').doc('apiKeyDashboard').onSnapshot(docSnapshot => {
   log.error(`Encountered error updating api key: ${err}`);
 });
 let eventbriteData = []
-
+console.log(`Hyphen-Hacks Server API Init ${startTime} v${version} ${apiKeyAuth}`)
 function getEventbriteAttendees(url) {
   return new Promise(
     function (resolve, reject) {
@@ -138,6 +138,25 @@ app.get('/', (req, res) => {
 app.get('/test', (req, res) => {
   res.send('HELLO')
 })
+app.get('/api/v1/logs', (req, res) => {
+  log.info('got a request to get logs')
+
+  if (req.headers.authorization === apiKeyAuth) {
+    log.info('api good')
+    const content = fs.readFileSync('./private/logs.log', 'utf8')
+   // console.log(content);   // Put all of the code here (not the best solution)
+    res.status(200)
+    res.json(JSON.stringify({data: CryptoJS.AES.encrypt(JSON.stringify({time: Date.now(), data: content}), apiKeyAuth).toString()}))
+    log.info('sent')// Or put the next step in a function and invoke it
+    res.end()
+
+  } else {
+    log.error('invalid dashboard api key')
+    res.status(401)
+    res.send({error: {message: 'invalid dashboard api key'}})
+    res.end()
+  }
+})
 app.post('/api/v1/sendEmail', (req, res) => {
   log.info('got a request to send an email', req.body, req.origin)
   const body = req.body
@@ -194,7 +213,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
         });
       } else {
         res.status(400)
-        res.send({error: {message: 'invalid request, must have email and name'}})
+        res.send({error: {message: 'invalid request, must have email and name', type: 'missing parameter'}})
         res.end()
       }
     } else if (body.type === 'waiverDeclined') {
@@ -253,19 +272,19 @@ app.post('/api/v1/sendEmail', (req, res) => {
       } else {
         log.error('invalid request, must have email and name and a message')
         res.status(400)
-        res.send({error: {message: 'invalid request, must have email and name and a message'}})
+        res.send({error: {message: 'invalid request, must have email and name and a message', type: 'missing parameter'}})
         res.end()
       }
     } else {
       log.error('invalid request, must have an email type')
       res.status(400)
-      res.send({error: {message: 'invalid request, must have an email type'}})
+      res.send({error: {message: 'invalid request, must have an email type', type: 'missing parameter'}})
       res.end()
     }
   } else {
     log.error('invalid dashboard api key')
     res.status(401)
-    res.send({error: {message: 'invalid dashboard api key'}})
+    res.send({error: {message: 'invalid dashboard api key', type: 'unauthorized'}})
     res.end()
   }
 })
