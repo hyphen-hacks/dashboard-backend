@@ -39,6 +39,7 @@ db.collection('secrets').doc('apiKeyDashboard').onSnapshot(docSnapshot => {
 });
 let eventbriteData = []
 console.log(`Hyphen-Hacks Server API Init ${startTime} v${version} ${apiKeyAuth}`)
+
 function getEventbriteAttendees(url) {
   return new Promise(
     function (resolve, reject) {
@@ -144,9 +145,13 @@ app.get('/api/v1/logs', (req, res) => {
   if (req.headers.authorization === apiKeyAuth) {
     log.info('api good')
     const content = fs.readFileSync('./private/logs.log', 'utf8')
-   // console.log(content);   // Put all of the code here (not the best solution)
+    // console.log(content);   // Put all of the code here (not the best solution)
     res.status(200)
-    res.json(JSON.stringify({data: CryptoJS.AES.encrypt(JSON.stringify({time: Date.now(), data: content}), apiKeyAuth).toString()}))
+    res.json(JSON.stringify({
+      data: CryptoJS.AES.encrypt(JSON.stringify({
+        time: Date.now(), data: content
+      }), apiKeyAuth).toString()
+    }))
     log.info('sent')// Or put the next step in a function and invoke it
     res.end()
 
@@ -272,7 +277,11 @@ app.post('/api/v1/sendEmail', (req, res) => {
       } else {
         log.error('invalid request, must have email and name and a message')
         res.status(400)
-        res.send({error: {message: 'invalid request, must have email and name and a message', type: 'missing parameter'}})
+        res.send({
+          error: {
+            message: 'invalid request, must have email and name and a message', type: 'missing parameter'
+          }
+        })
         res.end()
       }
     } else {
@@ -526,6 +535,36 @@ app.post('/api/v1/unsubscribeEmail', (req, res) => {
     })
     res.end()
   }
+})
+app.post('/api/v2/mailinglist', (req, res) => {
+  const body = req.body
+  log.info('got a request to add email to mailing list API v2', body)
+  if (body.email) {
+    fetch('api.sendgrid.com/contactdb/recipients', {
+      method: 'get',
+      headers: {
+        Authorization: 'Bearer '+ keys.sendGrid
+      }
+    }).then(resp => resp.json()).then(contactsDB => {
+
+    })
+    let sendgridBody = {
+      email: body.email,
+      interests: JSON.stringify(body.interests)
+      referrer: body.referrer
+    }
+
+  } else {
+    res.status(400)
+    res.send({
+      error: {
+        type: 'invalid request',
+        message: 'make sure to include an email in the request'
+      }
+    })
+    res.end()
+  }
+
 })
 app.post('/api/v1/addEmail', (req, res) => {
   let body = req.body

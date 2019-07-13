@@ -9,7 +9,7 @@ let emails = []
 function Person(input) {
   this.email = input.email
   this.name = input.name
-  this.referer = 'hyphen-hacks-2018'
+  this.referrer = 'hyphen-hacks_2018'
   this.interests = `${input.role}, returning`
   this.years_involved = '2018'
   this.role = input.role

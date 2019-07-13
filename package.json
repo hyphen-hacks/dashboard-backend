@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "copyApiKeys": "scp ./private/api-keys.json root@138.68.224.88:~/dashboard-backend/private/api-keys.json"
+    "copyApiKeys": "scp ./private/api-keys.json admin@138.68.224.88:~/dashboard-backend/private/api-keys.json"
   },
   "repository": {
     "type": "git",
@@ -28,8 +28,6 @@
     "log4node": "^0.1.6",
     "moment": "^2.24.0",
     "node-fetch": "^2.3.0",
-    "node-mailer": "^0.1.1",
-    "nodemailer": "^6.1.1",
     "uuid": "^3.3.2"
   }
 }
