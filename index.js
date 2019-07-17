@@ -198,7 +198,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
             }
           }
         };
-        log.info(JSON.stringify(mailBody))
+       // log.info(JSON.stringify(mailBody))
         fetch('https://api.sendgrid.com/v3/mail/send', {
           method: 'post',
           headers: {
@@ -207,6 +207,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
           },
           body: JSON.stringify(mailBody)
         }).then(() => {
+          log.info('success')
           res.status(200)
           res.send({success: true})
           res.end()
