@@ -7,6 +7,9 @@ const CryptoJS = require("crypto-js");
 const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313', 'https://emails.hyphen-hacks.com', 'http://emails.hyphen-hacks.com']
 const moment = require('moment')
 let log = require('log4node');
+const path = require('path'),
+  analyticsPath = path.join(__dirname, './private/analyticsResult.json');
+
 
 log.reconfigure({level: 'debug', file: './private/logs.log'});
 const corsOptions = {
@@ -133,6 +136,8 @@ const cors = require('cors')
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cors(corsOptions))
+
+
 app.get('/', (req, res) => {
   res.redirect(301, 'https://hyphen-hacks.com')
 })
@@ -154,6 +159,99 @@ app.get('/api/v1/logs', (req, res) => {
     }))
     log.info('sent')// Or put the next step in a function and invoke it
     res.end()
+
+  } else {
+    log.error('invalid dashboard api key')
+    res.status(401)
+    res.send({error: {message: 'invalid dashboard api key'}})
+    res.end()
+  }
+})
+app.get('/api/v2/headerRow', (req, res) => {
+  log.info('got a request to get stats')
+
+  if (req.headers.authorization === apiKeyAuth) {
+    log.info('api good')
+    fs.readFile('./private/analyticsResults.json', {encoding: 'utf-8'}, function (err, data) {
+      if (!err) {
+        //  console.log('received data: ' + data);
+        data = JSON.parse(data)
+        const totalPeople = data.totalPeople
+        const attendees = data.attendees
+        const waiverStats = Math.round(((data.waiverStats.accepted.attendees + data.waiverStats.accepted.mentors + data.waiverStats.accepted.volunteers) / totalPeople) * 100)
+        const females = Math.round((data.genderDistribution.attendees.Female / attendees) * 100)
+        let bestYear = {
+          year: '2020',
+          people: 1
+        }
+        let bestRefferer = {
+          refferer: '2020',
+          people: 1
+        }
+        for (let key in data.graduationDistribution) {
+          if (data.graduationDistribution.hasOwnProperty(key)) {
+            if (data.graduationDistribution[key] > bestYear.people) {
+              bestYear = {
+                year: key,
+                people: data.graduationDistribution[key]
+              }
+            }
+          }
+        }
+        for (let key in data.refferer) {
+          if (data.refferer.hasOwnProperty(key)) {
+            if (data.refferer[key] > bestRefferer.people) {
+              bestRefferer = {
+                refferer: key,
+                people: data.refferer[key]
+              }
+            }
+          }
+        }
+
+
+        res.status(200)
+        res.json(JSON.stringify({success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
+          headerRow: [
+            {
+              title: 'Waivers Completed',
+              value: waiverStats + '%'
+            },
+            {
+              title: 'Attendees',
+              value: attendees
+            },
+            {
+              title: '% Female',
+              value: females + '%'
+            },
+            {
+              title: 'Most Common Grad Year',
+              value: bestYear.year
+            },
+            {
+              title: 'Best Referral Source',
+              value: bestRefferer.refferer
+            }
+          ]
+        }), apiKeyAuth).toString()}))
+        log.info('sent')// Or put the next step in a function and invoke it
+        res.end()
+
+      } else {
+        console.log(err);
+        res.status(500)
+        res.json(JSON.stringify({
+          success: false,
+          error: {
+            message: 'internal server error'
+          }
+        }))
+        log.info('sent')// Or put the next step in a function and invoke it
+        res.end()
+      }
+    });
+
 
   } else {
     log.error('invalid dashboard api key')
@@ -198,7 +296,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
             }
           }
         };
-        log.info(JSON.stringify(mailBody))
+        // log.info(JSON.stringify(mailBody))
         fetch('https://api.sendgrid.com/v3/mail/send', {
           method: 'post',
           headers: {
@@ -207,6 +305,7 @@ app.post('/api/v1/sendEmail', (req, res) => {
           },
           body: JSON.stringify(mailBody)
         }).then(() => {
+          log.info('success')
           res.status(200)
           res.send({success: true})
           res.end()
@@ -543,14 +642,14 @@ app.post('/api/v2/mailinglist', (req, res) => {
     fetch('api.sendgrid.com/contactdb/recipients', {
       method: 'get',
       headers: {
-        Authorization: 'Bearer '+ keys.sendGrid
+        Authorization: 'Bearer ' + keys.sendGrid
       }
     }).then(resp => resp.json()).then(contactsDB => {
 
     })
     let sendgridBody = {
       email: body.email,
-      interests: JSON.stringify(body.interests)
+      interests: JSON.stringify(body.interests),
       referrer: body.referrer
     }
 
@@ -830,6 +929,6 @@ const server = app.listen(port, function () {
   const host = server.address().address
   const port = server.address().port
 
-  log.info('API initialized and listening')
+  log.info('API initialized and listening', host, port)
 
 });
