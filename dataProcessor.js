@@ -11,7 +11,7 @@ admin.initializeApp({
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
 });
 const startTime = moment().format('MMM Do, HH:mm:ss')
-console.log(`Hyphen-Hacks Server API Init ${startTime}`)
+console.log(`Hyphen-Hacks Data Processor API Init ${startTime}`)
 
 function Person(i, time) {
   if (i.ticket_class_name === 'High school Student') {

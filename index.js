@@ -7,9 +7,7 @@ const CryptoJS = require("crypto-js");
 const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313', 'https://emails.hyphen-hacks.com', 'http://emails.hyphen-hacks.com']
 const moment = require('moment')
 let log = require('log4node');
-const path = require('path'),
-  analyticsPath = path.join(__dirname, './private/analyticsResult.json');
-
+const path = require('path')
 
 log.reconfigure({level: 'debug', file: './private/logs.log'});
 const corsOptions = {
@@ -172,85 +170,92 @@ app.get('/api/v2/headerRow', (req, res) => {
 
   if (req.headers.authorization === apiKeyAuth) {
     log.info('api good')
-    fs.readFile('./private/analyticsResults.json', {encoding: 'utf-8'}, function (err, data) {
-      if (!err) {
-        //  console.log('received data: ' + data);
-        data = JSON.parse(data)
-        const totalPeople = data.totalPeople
-        const attendees = data.attendees
-        const waiverStats = Math.round(((data.waiverStats.accepted.attendees + data.waiverStats.accepted.mentors + data.waiverStats.accepted.volunteers) / totalPeople) * 100)
-        const females = Math.round((data.genderDistribution.attendees.Female / attendees) * 100)
-        let bestYear = {
-          year: '2020',
-          people: 1
-        }
-        let bestRefferer = {
-          refferer: '2020',
-          people: 1
-        }
-        for (let key in data.graduationDistribution) {
-          if (data.graduationDistribution.hasOwnProperty(key)) {
-            if (data.graduationDistribution[key] > bestYear.people) {
-              bestYear = {
-                year: key,
-                people: data.graduationDistribution[key]
+    if (fs.existsSync('./private/analyticsResults.json')) {
+      fs.readFile('./private/analyticsResults.json', {encoding: 'utf-8'}, function (err, data) {
+        if (!err) {
+          //  console.log('received data: ' + data);
+          data = JSON.parse(data)
+          const totalPeople = data.totalPeople
+          const attendees = data.attendees
+          const waiverStats = Math.round(((data.waiverStats.accepted.attendees + data.waiverStats.accepted.mentors + data.waiverStats.accepted.volunteers) / totalPeople) * 100)
+          const females = Math.round((data.genderDistribution.attendees.Female / attendees) * 100)
+          let bestYear = {
+            year: '2020',
+            people: 1
+          }
+          let bestRefferer = {
+            refferer: '2020',
+            people: 1
+          }
+          for (let key in data.graduationDistribution) {
+            if (data.graduationDistribution.hasOwnProperty(key)) {
+              if (data.graduationDistribution[key] > bestYear.people) {
+                bestYear = {
+                  year: key,
+                  people: data.graduationDistribution[key]
+                }
               }
             }
           }
-        }
-        for (let key in data.refferer) {
-          if (data.refferer.hasOwnProperty(key)) {
-            if (data.refferer[key] > bestRefferer.people) {
-              bestRefferer = {
-                refferer: key,
-                people: data.refferer[key]
+          for (let key in data.refferer) {
+            if (data.refferer.hasOwnProperty(key)) {
+              if (data.refferer[key] > bestRefferer.people) {
+                bestRefferer = {
+                  refferer: key,
+                  people: data.refferer[key]
+                }
               }
             }
           }
-        }
 
 
-        res.status(200)
-        res.json(JSON.stringify({success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
-          headerRow: [
-            {
-              title: 'Waivers Completed',
-              value: waiverStats + '%'
-            },
-            {
-              title: 'Attendees',
-              value: attendees
-            },
-            {
-              title: '% Female',
-              value: females + '%'
-            },
-            {
-              title: 'Most Common Grad Year',
-              value: bestYear.year
-            },
-            {
-              title: 'Best Referral Source',
-              value: bestRefferer.refferer
+          res.status(200)
+          res.json(JSON.stringify({success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
+              headerRow: [
+                {
+                  title: 'Waivers Completed',
+                  value: waiverStats + '%'
+                },
+                {
+                  title: 'Attendees',
+                  value: attendees
+                },
+                {
+                  title: '% Female',
+                  value: females + '%'
+                },
+                {
+                  title: 'Most Common Grad Year',
+                  value: bestYear.year
+                },
+                {
+                  title: 'Best Referral Source',
+                  value: bestRefferer.refferer
+                }
+              ]
+            }), apiKeyAuth).toString()}))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+
+        } else {
+          console.log(err);
+          res.status(500)
+          res.json(JSON.stringify({
+            success: false,
+            error: {
+              message: 'internal server error'
             }
-          ]
-        }), apiKeyAuth).toString()}))
-        log.info('sent')// Or put the next step in a function and invoke it
-        res.end()
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+        }
+      });
+    } else {
+      res.status(500)
+      res.send({error: {message: 'analyticsNotProcessed'}})
+      res.end()
+    }
 
-      } else {
-        console.log(err);
-        res.status(500)
-        res.json(JSON.stringify({
-          success: false,
-          error: {
-            message: 'internal server error'
-          }
-        }))
-        log.info('sent')// Or put the next step in a function and invoke it
-        res.end()
-      }
-    });
 
 
   } else {
