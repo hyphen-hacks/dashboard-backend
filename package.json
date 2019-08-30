@@ -20,6 +20,7 @@
   "dependencies": {
     "@sendgrid/client": "^6.3.0",
     "@sendgrid/mail": "^6.3.1",
+    "compromise": "^11.14.2",
     "cors": "^2.8.5",
     "crypto-js": "^3.1.9-1",
     "express": "^4.16.4",
@@ -27,7 +28,9 @@
     "log4js": "^4.2.0",
     "log4node": "^0.1.6",
     "moment": "^2.24.0",
+    "node-cron": "^2.0.3",
     "node-fetch": "^2.3.0",
+    "socket.io": "^2.2.0",
     "uuid": "^3.3.2"
   }
 }
