@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 const fs = require('fs')
 const moment = require('moment')
 const nlp = require('compromise')
-const roster = require('./private/roster.json')
+//const roster = require('./private/roster.json')
 
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
