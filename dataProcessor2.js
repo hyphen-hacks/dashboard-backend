@@ -4,7 +4,7 @@ const keys = require('./private/api-keys.json')
 const admin = require("firebase-admin");
 const fetch = require('node-fetch');
 const fs = require('fs')
-const moment = require('moment')
+const moment = require('moment-timezone');
 const nlp = require('compromise')
 //const roster = require('./private/roster.json')
 
@@ -12,7 +12,7 @@ admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
 });
-const startTime = moment().format('MMM Do, HH:mm:ss')
+const startTime = moment().tz("America/Los_Angeles").format('MMM Do, HH:mm:ss')
 const nodeVersion = process.version
 console.log(`Hyphen-Hacks Data Processor v2 API Init ${startTime} Node ${nodeVersion}`)
 

@@ -28,6 +28,7 @@
     "log4js": "^4.2.0",
     "log4node": "^0.1.6",
     "moment": "^2.24.0",
+    "moment-timezone": "^0.5.26",
     "node-cron": "^2.0.3",
     "node-fetch": "^2.3.0",
     "socket.io": "^2.2.0",
