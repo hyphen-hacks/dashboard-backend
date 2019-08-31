@@ -184,15 +184,22 @@ app.get('/api/v2/statsBlock', (req, res) => {
           const preferNotToSayAttendees = DS.textStat.get({
             path: 'attendeeGenderDistribution', value: 'prefer not to say'
           })
+          const gradeDistribution = DS.textStat.get({path: 'graduationdistribution'})
+          const codingExperience = DS.textStat.get({path: 'attendeeteamcodingexperience'})
           res.status(200)
           res.json(JSON.stringify({
             success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
-              femaleAttendees: femaleAttendees,
-              maleAttendees: maleAttendees,
-              nonGenderBinaryAttendees: nonGenderBinaryAttendees,
-              preferNotToSayAttendees: preferNotToSayAttendees,
-              timeStamp: DS.getMeta({path: 'timeStamp'})
-            }), apiKeyAuth).toString()
+                femaleAttendees: femaleAttendees,
+                maleAttendees: maleAttendees,
+                nonGenderBinaryAttendees: nonGenderBinaryAttendees,
+                preferNotToSayAttendees: preferNotToSayAttendees,
+                gradeDistribution: gradeDistribution,
+                codingExperience: codingExperience,
+                timeStamp:
+                  DS.getMeta({path: 'timeStamp'})
+              }),
+              apiKeyAuth
+            ).toString()
           }))
           log.info('sent')// Or put the next step in a function and invoke it
           res.end()
