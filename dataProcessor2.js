@@ -13,9 +13,10 @@ admin.initializeApp({
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
 });
 const startTime = moment().format('MMM Do, HH:mm:ss')
-console.log(`Hyphen-Hacks Data Processor v2 API Init ${startTime}`)
+const nodeVersion = process.version
+console.log(`Hyphen-Hacks Data Processor v2 API Init ${startTime} Node ${nodeVersion}`)
 
-function process() {
+function processData() {
   console.log('Loading Data', moment().format('MMMM Do YYYY, h:mm:ss a'))
   let DS = new dataStorage()
   DS.singleStat.init({path: 'totalPeople'})
@@ -122,7 +123,7 @@ function process() {
 
 cron.schedule('30 * * * *', () => {
   console.log('running a task every half hour');
-  process()
+  processData()
 
 });
-process()
+processData()
