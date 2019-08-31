@@ -6,6 +6,8 @@ const fs = require('fs')
 const moment = require('moment')
 const nlp = require('compromise')
 
+
+
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
