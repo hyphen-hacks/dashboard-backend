@@ -17,7 +17,7 @@ const nodeVersion = process.version
 console.log(`Hyphen-Hacks Data Processor v2 API Init ${startTime} Node ${nodeVersion}`)
 
 function processData() {
-  console.log('Loading Data', moment().format('MMMM Do YYYY, h:mm:ss a'))
+  console.log('Loading Data', moment().tz("America/Los_Angeles").format('MMMM Do YYYY, h:mm:ss a'))
   let DS = new dataStorage()
   DS.singleStat.init({path: 'totalPeople'})
   DS.singleStat.init({path: 'attendees'})
@@ -53,7 +53,7 @@ function processData() {
   DS.list.init({path: 'attendeeBirthDays'})
   DS.list.init({path: 'attendeesSignedUp'})
   admin.firestore().collection('people').get().then(snap => {
-    const timeFetched = moment()
+    const timeFetched = moment().tz("America/Los_Angeles")
     DS.setMeta({path: 'timeStamp', value: timeFetched})
     console.log('downloaded Data', timeFetched.format('MMMM Do YYYY, h:mm:ss a'))
     snap.forEach(i => {
