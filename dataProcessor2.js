@@ -120,8 +120,8 @@ function process() {
 
 }
 
-cron.schedule('* * 1 * *', () => {
-  console.log('running a task every hour');
+cron.schedule('* 30 * * *', () => {
+  console.log('running a task every half hour');
   process()
 
 });
