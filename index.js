@@ -167,7 +167,7 @@ app.get('/api/v1/logs', (req, res) => {
     res.end()
   }
 })
-app.get('/api/v2/statsBlock', (req, res) => {
+app.get('/api/v3/statsBlock', (req, res) => {
   log.info('got a request to get stats Block')
 
   if (req.headers.authorization === apiKeyAuth) {
@@ -176,25 +176,10 @@ app.get('/api/v2/statsBlock', (req, res) => {
         if (!err) {
           data = JSON.parse(data)
           DS.loadJSON(data)
-          const femaleAttendees = DS.textStat.get({path: 'attendeeGenderDistribution', value: 'female'})
-          const maleAttendees = DS.textStat.get({path: 'attendeeGenderDistribution', value: 'male'})
-          const nonGenderBinaryAttendees = DS.textStat.get({
-            path: 'attendeeGenderDistribution', value: 'non gender binary'
-          })
-          const preferNotToSayAttendees = DS.textStat.get({
-            path: 'attendeeGenderDistribution', value: 'prefer not to say'
-          })
-          const gradeDistribution = DS.textStat.get({path: 'graduationdistribution'})
-          const codingExperience = DS.textStat.get({path: 'attendeeteamcodingexperience'})
           res.status(200)
           res.json(JSON.stringify({
             success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
-                femaleAttendees: femaleAttendees,
-                maleAttendees: maleAttendees,
-                nonGenderBinaryAttendees: nonGenderBinaryAttendees,
-                preferNotToSayAttendees: preferNotToSayAttendees,
-                gradeDistribution: gradeDistribution,
-                codingExperience: codingExperience,
+                store: DS.getJSON(),
                 timeStamp:
                   DS.getMeta({path: 'timeStamp'})
               }),
@@ -217,6 +202,66 @@ app.get('/api/v2/statsBlock', (req, res) => {
         }
       })
     }
+  } else {
+    res.status(401)
+    res.end()
+  }
+})
+app.get('/api/v2/statsBlock', (req, res) => {
+  log.info('got a request to get stats Block')
+
+  if (req.headers.authorization === apiKeyAuth) {
+    if (fs.existsSync('./private/analyticsDatabase.json')) {
+      fs.readFile('./private/analyticsDatabase.json', {encoding: 'utf-8'}, function (err, data) {
+        if (!err) {
+          data = JSON.parse(data)
+          DS.loadJSON(data)
+          const femaleAttendees = DS.textStat.get({path: 'attendeeGenderDistribution', value: 'female'})
+          const maleAttendees = DS.textStat.get({path: 'attendeeGenderDistribution', value: 'male'})
+          const nonGenderBinaryAttendees = DS.textStat.get({
+            path: 'attendeeGenderDistribution', value: 'non gender binary'
+          })
+          const preferNotToSayAttendees = DS.textStat.get({
+            path: 'attendeeGenderDistribution', value: 'prefer not to say'
+          })
+          const gradeDistribution = DS.textStat.get({path: 'graduationdistribution'})
+          const codingExperience = DS.textStat.get({path: 'attendeeteamcodingexperience'})
+          const referrers = DS.textStat.get({path: 'referrers'})
+          res.status(200)
+          res.json(JSON.stringify({
+            success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
+                femaleAttendees: femaleAttendees,
+                maleAttendees: maleAttendees,
+                nonGenderBinaryAttendees: nonGenderBinaryAttendees,
+                preferNotToSayAttendees: preferNotToSayAttendees,
+                gradeDistribution: gradeDistribution,
+                codingExperience: codingExperience,
+                referrers: referrers,
+                timeStamp:
+                  DS.getMeta({path: 'timeStamp'})
+              }),
+              apiKeyAuth
+            ).toString()
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+        } else {
+          console.log(err);
+          res.status(500)
+          res.json(JSON.stringify({
+            success: false,
+            error: {
+              message: 'internal server error'
+            }
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+        }
+      })
+    }
+  } else {
+    res.status(401)
+    res.end()
   }
 })
 app.get('/api/v2/headerRow', (req, res) => {

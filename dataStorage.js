@@ -1,5 +1,3 @@
-const fs = require('fs')
-const moment = require('moment')
 const nlp = require('compromise')
 
 
