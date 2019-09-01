@@ -1,4 +1,5 @@
 const nlp = require('compromise')
+const moment = require('moment')
 
 
 function dataStorage() {
@@ -79,6 +80,18 @@ function dataStorage() {
     get: input => {
       input.path = this.cleanText(input.path)
       return this.store.data[input.path]
+    },
+    toChart: input => {
+      input.path = this.cleanText(input.path)
+      let data = []
+      Object.keys(this.store.data[input.path]).forEach(i => {
+        data.push(this.store.data[input.path][i])
+      })
+      return {
+        data: data,
+        labels: Object.keys(this.store.data[input.path])
+      }
+
     }
   }
   this.textStat = {
@@ -115,6 +128,18 @@ function dataStorage() {
         return this.store.data[input.path]
       }
 
+    },
+    toChart: input => {
+      input.path = this.cleanText(input.path)
+      let data = []
+      Object.keys(this.store.data[input.path]).forEach(i => {
+        data.push(this.store.data[input.path][i])
+      })
+      return {
+        data: data,
+        labels: Object.keys(this.store.data[input.path])
+      }
+
     }
   }
   this.list = {
@@ -140,6 +165,68 @@ function dataStorage() {
     get: input => {
       input.path = this.cleanText(input.path)
       return this.store.data[input.path]
+    }
+  }
+  this.dateStat = {
+    init: (input) => {
+      input.path = this.cleanText(input.path)
+      this.store.data[input.path] = {
+        data: [],
+        start: 10000202020202022020,
+        end: 0,
+        counter: 0
+      }
+      this.store.indexes[input.path] = {
+        type: 'dateStat',
+        name: input.path
+      }
+    },
+    add: (input) => {
+      input.path = this.cleanText(input.path);
+      //console.log(input.value)
+      const unix = moment(input.value).unix()
+      if (unix < this.store.data[input.path].start) {
+        this.store.data[input.path].start = unix
+      }
+      if (unix > this.store.data[input.path].end) {
+        this.store.data[input.path].end = unix
+      }
+      //this.store.data[input.path].data.push({unix: unix - 1, count: this.store.data[input.path].counter, time: input.value})
+      this.store.data[input.path].counter++
+      this.store.data[input.path].data.push({unix: unix, count: this.store.data[input.path].counter, time: input.value})
+
+    },
+    get: input => {
+      input.path = this.cleanText(input.path)
+      return this.store.data[input.path]
+    },
+    toChart: input => {
+      input.path = this.cleanText(input.path)
+      let data = []
+      let labels = []
+      let currentDay = this.store.data[input.path].start
+      let dayCounter = 0
+      /*while (moment(currentDay).isSameOrBefore(this.store.data[input.path].end)) {
+        // code block to be executed
+        dayCounter ++
+        currentDay = moment(currentDay).add(1, 'd').unix()
+      }
+      console.log(dayCounter)
+      */
+
+      this.store.data[input.path].data.forEach(i => {
+        data.push({x: i.unix, y: i.count})
+
+        labels.push(moment(i.time).format('MMM D'))
+        // data.push(i.count)
+      })
+      return {
+        data: data,
+        labels: labels,
+        end: this.store.data[input.path].end,
+        start: this.store.data[input.path].start
+      }
+
     }
   }
 

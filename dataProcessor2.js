@@ -51,7 +51,7 @@ function processData() {
   DS.list.init({path: 'attendeeDescriptionOfCodingExperience'})
   DS.list.init({path: 'specialNeeds'})
   DS.list.init({path: 'attendeeBirthDays'})
-  DS.list.init({path: 'attendeesSignedUp'})
+  DS.dateStat.init({path: 'attendeesSignedUp'})
   admin.firestore().collection('people').get().then(snap => {
     const timeFetched = moment().tz("America/Los_Angeles")
     DS.setMeta({path: 'timeStamp', value: timeFetched})
@@ -66,7 +66,7 @@ function processData() {
 
           DS.singleStat.increment({path: 'attendees'})
           DS.list.add({path: 'attendeeBirthDays', value: person.profile.birth_date})
-          DS.list.add({path: 'attendeesSignedUp', value: person.created})
+          DS.dateStat.add({path: 'attendeesSignedUp', value: person.created})
           DS.textStat.increment({path: 'graduationDistribution', value: person.answers[0].answer})
           DS.multiTextStat.increment({path: 'schools', value: person.answers[1].answer})
           DS.multiTextStat.increment({path: 'referrers', value: person.answers[23].answer})
