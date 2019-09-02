@@ -6,10 +6,14 @@ const fs = require('fs')
 const moment = require('moment')
 const nlp = require('compromise')
 
+
+
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
 });
+const startTime = moment().format('MMM Do, HH:mm:ss')
+console.log(`Hyphen-Hacks Data Processor API Init ${startTime}`)
 
 function Person(i, time) {
   if (i.ticket_class_name === 'High school Student') {
@@ -54,6 +58,7 @@ function Person(i, time) {
 }
 
 function process() {
+  console.log('processing')
   let results = []
   let data = {
     totalPeople: 0,
@@ -120,7 +125,7 @@ function process() {
           }
           if (cleanedPerson.role === 'attendee') {
             data.attendees++
-            console.log(cleanedPerson.school)
+            // console.log(cleanedPerson.school)
             if (data.schools[cleanedPerson.school]) {
               data.schools[cleanedPerson.school]++
             } else {
@@ -236,9 +241,12 @@ function process() {
 
 
       })
-      console.log(data)
-      fs.writeFile('./private/analyticsResults.json', JSON.stringify(data), () => {
-
+      //console.log(data)
+      fs.writeFile('./private/analyticsResults.json', JSON.stringify(data), (e) => {
+        if (e) {
+          console.log(e)
+        }
+        console.log('writen')
       })
 
     }
@@ -252,3 +260,4 @@ cron.schedule('* * 1 * *', () => {
 
 });
 process()
+

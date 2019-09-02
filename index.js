@@ -7,9 +7,9 @@ const CryptoJS = require("crypto-js");
 const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313', 'https://emails.hyphen-hacks.com', 'http://emails.hyphen-hacks.com']
 const moment = require('moment')
 let log = require('log4node');
-const path = require('path'),
-  analyticsPath = path.join(__dirname, './private/analyticsResult.json');
-
+const path = require('path')
+const DataStorage = require('./dataStorage.js')
+let DS = new DataStorage()
 
 log.reconfigure({level: 'debug', file: './private/logs.log'});
 const corsOptions = {
@@ -167,90 +167,203 @@ app.get('/api/v1/logs', (req, res) => {
     res.end()
   }
 })
+app.get('/api/v3/statsBlock', (req, res) => {
+  log.info('got a request to get stats Block')
+
+  if (req.headers.authorization === apiKeyAuth) {
+    if (fs.existsSync('./private/analyticsDatabase.json')) {
+      fs.readFile('./private/analyticsDatabase.json', {encoding: 'utf-8'}, function (err, data) {
+        if (!err) {
+          data = JSON.parse(data)
+          DS.loadJSON(data)
+          res.status(200)
+          res.json(JSON.stringify({
+            success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
+                store: DS.getJSON(),
+                timeStamp:
+                  DS.getMeta({path: 'timeStamp'})
+              }),
+              apiKeyAuth
+            ).toString()
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+        } else {
+          console.log(err);
+          res.status(500)
+          res.json(JSON.stringify({
+            success: false,
+            error: {
+              message: 'internal server error'
+            }
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+        }
+      })
+    }
+  } else {
+    res.status(401)
+    res.end()
+  }
+})
+app.get('/api/v2/statsBlock', (req, res) => {
+  log.info('got a request to get stats Block')
+
+  if (req.headers.authorization === apiKeyAuth) {
+    if (fs.existsSync('./private/analyticsDatabase.json')) {
+      fs.readFile('./private/analyticsDatabase.json', {encoding: 'utf-8'}, function (err, data) {
+        if (!err) {
+          data = JSON.parse(data)
+          DS.loadJSON(data)
+          const femaleAttendees = DS.textStat.get({path: 'attendeeGenderDistribution', value: 'female'})
+          const maleAttendees = DS.textStat.get({path: 'attendeeGenderDistribution', value: 'male'})
+          const nonGenderBinaryAttendees = DS.textStat.get({
+            path: 'attendeeGenderDistribution', value: 'non gender binary'
+          })
+          const preferNotToSayAttendees = DS.textStat.get({
+            path: 'attendeeGenderDistribution', value: 'prefer not to say'
+          })
+          const gradeDistribution = DS.textStat.get({path: 'graduationdistribution'})
+          const codingExperience = DS.textStat.get({path: 'attendeeteamcodingexperience'})
+          const referrers = DS.textStat.get({path: 'referrers'})
+          res.status(200)
+          res.json(JSON.stringify({
+            success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
+                femaleAttendees: femaleAttendees,
+                maleAttendees: maleAttendees,
+                nonGenderBinaryAttendees: nonGenderBinaryAttendees,
+                preferNotToSayAttendees: preferNotToSayAttendees,
+                gradeDistribution: gradeDistribution,
+                codingExperience: codingExperience,
+                referrers: referrers,
+                timeStamp:
+                  DS.getMeta({path: 'timeStamp'})
+              }),
+              apiKeyAuth
+            ).toString()
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+        } else {
+          console.log(err);
+          res.status(500)
+          res.json(JSON.stringify({
+            success: false,
+            error: {
+              message: 'internal server error'
+            }
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+        }
+      })
+    }
+  } else {
+    res.status(401)
+    res.end()
+  }
+})
 app.get('/api/v2/headerRow', (req, res) => {
   log.info('got a request to get stats')
 
   if (req.headers.authorization === apiKeyAuth) {
     log.info('api good')
-    fs.readFile('./private/analyticsResults.json', {encoding: 'utf-8'}, function (err, data) {
-      if (!err) {
-        //  console.log('received data: ' + data);
-        data = JSON.parse(data)
-        const totalPeople = data.totalPeople
-        const attendees = data.attendees
-        const waiverStats = Math.round(((data.waiverStats.accepted.attendees + data.waiverStats.accepted.mentors + data.waiverStats.accepted.volunteers) / totalPeople) * 100)
-        const females = Math.round((data.genderDistribution.attendees.Female / attendees) * 100)
-        let bestYear = {
-          year: '2020',
-          people: 1
-        }
-        let bestRefferer = {
-          refferer: '2020',
-          people: 1
-        }
-        for (let key in data.graduationDistribution) {
-          if (data.graduationDistribution.hasOwnProperty(key)) {
-            if (data.graduationDistribution[key] > bestYear.people) {
-              bestYear = {
-                year: key,
-                people: data.graduationDistribution[key]
+    if (fs.existsSync('./private/analyticsDatabase.json')) {
+      fs.readFile('./private/analyticsDatabase.json', {encoding: 'utf-8'}, function (err, data) {
+        if (!err) {
+          //  console.log('received data: ' + data);
+          data = JSON.parse(data)
+          DS.loadJSON(data)
+          const totalPeople = DS.singleStat.get({path: 'totalPeople'})
+          const attendees = DS.singleStat.get({path: 'attendees'})
+          const attendeesWithAcceptedWaivers = DS.singleStat.get({path: 'attendeesWithAcceptedWaivers'})
+          const mentorsWithAcceptedWaivers = DS.singleStat.get({path: 'mentorsWithAcceptedWaivers'})
+          const volunteersWithAcceptedWaivers = DS.singleStat.get({path: 'volunteersWithAcceptedWaivers'})
+          const femaleAttendees = DS.textStat.get({path: 'attendeeGenderDistribution', value: 'female'})
+          const waiverStats = Math.round(((attendeesWithAcceptedWaivers + mentorsWithAcceptedWaivers + volunteersWithAcceptedWaivers) / totalPeople) * 100)
+          const females = Math.round((femaleAttendees / attendees) * 100)
+          let bestYear = {
+            year: 'ERROR',
+            people: 1
+          }
+          let bestRefferer = {
+            refferer: 'ERROR',
+            people: 1
+          }
+          const gradeDistrubution = DS.textStat.get({path: 'graduationDistribution'})
+          const referrers = DS.textStat.get({path: 'referrers'})
+          for (let key in gradeDistrubution) {
+            if (gradeDistrubution.hasOwnProperty(key)) {
+              if (gradeDistrubution[key] > bestYear.people) {
+                bestYear = {
+                  year: key,
+                  people: gradeDistrubution[key]
+                }
               }
             }
           }
-        }
-        for (let key in data.refferer) {
-          if (data.refferer.hasOwnProperty(key)) {
-            if (data.refferer[key] > bestRefferer.people) {
-              bestRefferer = {
-                refferer: key,
-                people: data.refferer[key]
+          for (let key in referrers) {
+            if (referrers.hasOwnProperty(key)) {
+              if (referrers[key] > bestRefferer.people) {
+                bestRefferer = {
+                  refferer: key,
+                  people: referrers[key]
+                }
               }
             }
           }
-        }
 
 
-        res.status(200)
-        res.json(JSON.stringify({success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
-          headerRow: [
-            {
-              title: 'Waivers Completed',
-              value: waiverStats + '%'
-            },
-            {
-              title: 'Attendees',
-              value: attendees
-            },
-            {
-              title: '% Female',
-              value: females + '%'
-            },
-            {
-              title: 'Most Common Grad Year',
-              value: bestYear.year
-            },
-            {
-              title: 'Best Referral Source',
-              value: bestRefferer.refferer
+          res.status(200)
+          res.json(JSON.stringify({
+            success: true, data: CryptoJS.AES.encrypt(JSON.stringify({
+              headerRow: [
+                {
+                  title: 'Waivers Completed',
+                  value: waiverStats + '%'
+                },
+                {
+                  title: 'Attendees',
+                  value: attendees
+                },
+                {
+                  title: '% Female',
+                  value: females + '%'
+                },
+                {
+                  title: 'Most Common Grad Year',
+                  value: bestYear.year
+                },
+                {
+                  title: 'Best Referral Source',
+                  value: bestRefferer.refferer
+                }
+              ],
+              timeStamp: DS.getMeta({path: 'timeStamp'})
+            }), apiKeyAuth).toString()
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+
+        } else {
+          console.log(err);
+          res.status(500)
+          res.json(JSON.stringify({
+            success: false,
+            error: {
+              message: 'internal server error'
             }
-          ]
-        }), apiKeyAuth).toString()}))
-        log.info('sent')// Or put the next step in a function and invoke it
-        res.end()
-
-      } else {
-        console.log(err);
-        res.status(500)
-        res.json(JSON.stringify({
-          success: false,
-          error: {
-            message: 'internal server error'
-          }
-        }))
-        log.info('sent')// Or put the next step in a function and invoke it
-        res.end()
-      }
-    });
+          }))
+          log.info('sent')// Or put the next step in a function and invoke it
+          res.end()
+        }
+      });
+    } else {
+      res.status(500)
+      res.send({error: {message: 'analyticsNotProcessed'}})
+      res.end()
+    }
 
 
   } else {
