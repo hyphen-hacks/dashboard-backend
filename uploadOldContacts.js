@@ -6,6 +6,7 @@ const moment = require('moment')
 const endPoint = 'https://api.sendgrid.com/v3/contactdb/recipients'
 let requestBody = []
 let emails = []
+
 function Person(input) {
   this.email = input.email
   this.name = input.name
@@ -23,6 +24,9 @@ const db = admin.database();
 const ref = db.ref('/attendeeDB/people')
 ref.once('value', (snap) => {
   const data = snap.val()
+  fs.writeFile('./private/oldDB.json', JSON.stringify(data), (e) => {
+    console.log(e)
+  });
   for (let property in data) {
     if (data.hasOwnProperty(property)) {
       const person = data[property]
@@ -38,9 +42,10 @@ ref.once('value', (snap) => {
 
     }
   }
-  console.log('Cleaned:', requestBody.length, 'people')
-  fs.writeFile('./private/emailsUpload.json', JSON.stringify(requestBody), (e)=> {console.log(e)})
-
+})
+console.log('Cleaned:', requestBody.length, 'people');
+// fs.writeFile('./private/emailsUpload.json', JSON.stringify(requestBody), (e)=> {console.log(e)});
+/*
   fetch(endPoint, {
     method: 'post',
     headers: {
@@ -52,4 +57,4 @@ ref.once('value', (snap) => {
     fs.writeFile('./private/emailsError.json', JSON.stringify(e), err => {console.log(err)})
   })
 
-})
+})*/

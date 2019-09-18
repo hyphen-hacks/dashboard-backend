@@ -1,15 +1,22 @@
 const keys = require('./private/api-keys.json')
 const admin = require("firebase-admin");
+const googleStorage = require('@google-cloud/storage');
 const fetch = require('node-fetch');
 const fs = require('fs')
 const uuidv4 = require('uuid/v4');
 const CryptoJS = require("crypto-js");
 const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313', 'https://emails.hyphen-hacks.com', 'http://emails.hyphen-hacks.com']
 const moment = require('moment')
+const momentTZ = require('moment-timezone')
 let log = require('log4node');
 const path = require('path')
 const DataStorage = require('./dataStorage.js')
 let DS = new DataStorage()
+var file_system = require('fs');
+var archiver = require('archiver');
+// or
+const heic2any = require("heic2any");
+
 
 log.reconfigure({level: 'debug', file: './private/logs.log'});
 const corsOptions = {
@@ -23,9 +30,15 @@ log.info(`Hyphen-Hacks Server API Init ${startTime} v${version}`)
 //console.log('cors whitlist', whitelist)
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
-  databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
+  databaseURL: "https://hyphen-hacks-2019.firebaseio.com",
+  storageBucket: "hyphen-hacks-2019.appspot.com"
 });
 const db = admin.firestore();
+let bucket = admin.storage().bucket();
+const bucketName = 'hyphen-hacks-2019.appspot.com'
+
+
+//admin.storage().bucket('hyphen-hacks-2019.appspot.com').ref('waivers/1248326854')
 let apiKeyAuth = uuidv4();
 db.collection('secrets').doc('apiKeyDashboard').set({
   key: apiKeyAuth,
@@ -261,6 +274,124 @@ app.get('/api/v2/statsBlock', (req, res) => {
     }
   } else {
     res.status(401)
+    res.end()
+  }
+})
+app.get('/api/v2/getCompletedWaivers', (req, res) => {
+  log.info('got a request to get completed waivers')
+
+  if (req.headers.authorization === apiKeyAuth) {
+    log.info('api good')
+    const peopleRef = db.collection('people');
+    const waiversCompleteRef = peopleRef.where('waiverStatus', '==', 2);
+    /*
+    res.sendFile(__dirname + 'completedWaivers_2019-09-17T20/50/15-07/00.zip', (e) => {
+      console.log(e)
+    })
+
+
+    res.end()
+
+     */
+
+
+
+
+    waiversCompleteRef.get().then(snap => {
+      if (snap.empty) {
+        console.log('No matching documents.');
+        return;
+      }
+      let counter = 0;
+      let found = 0;
+      let toDownload = []
+      snap.forEach(doc => {
+
+        console.log('found', found)
+        const waiverDBUrl = doc.data().waiverImage
+        //console.log(waiverDBUrl)
+        toDownload.push({id: doc.id, src: waiverDBUrl});
+
+      });
+      console.log('Download Length:', toDownload.length)
+      let i = 0;
+      downloadItems = async () => {
+        while (i < toDownload.length) {
+          const id = toDownload[i].id;
+          const srcFilename = toDownload[i].src
+          let destFilename = './private/waivers/' + id
+
+          const result = await bucket.file(srcFilename).getMetadata()
+          const contentType = result[0].contentType
+          //console.log(contentType)
+          if (contentType === 'image/svg+xml') {
+            destFilename += '.svg'
+          } else {
+            destFilename += '.' + contentType.match(/\/([^\/]+)\/?$/)[1]
+          }
+          //console.log(destFilename)
+          const options = {
+            // The path to which the file should be downloaded, e.g. "./file.txt"
+            destination: destFilename,
+          };
+
+          await bucket.file(srcFilename).download(options)
+          counter++
+          //console.log(`gs://${bucketName}/${srcFilename} downloaded to ${destFilename}.`);
+          console.log('downloaded', counter, Math.round((counter / toDownload.length) * 100) + '%')
+          i++
+        }
+      }
+      downloadItems().then(i => {
+        console.log('competed Download')
+        const date = momentTZ().tz('America/Los_Angeles').format()
+        let output = file_system.createWriteStream(`./private/completedWaivers.zip`);
+        let archive = archiver('zip');
+        output.on('close', () => {
+          console.log(archive.pointer() + ' total bytes');
+          console.log('archiver has been finalized and the output file descriptor has closed.');
+
+          bucket.upload(`./private/completedWaivers.zip`, {
+            // Support for HTTP requests made with `Accept-Encoding: gzip`
+            gzip: true,
+            // By setting the option `destination`, you can change the name of the
+            // object you are uploading to a bucket.
+            destination: 'private/completedWaivers.zip',
+            metadata: {
+              // Enable long-lived HTTP caching headers
+              // Use only if the contents of the file will never change
+              // (If the contents will change, use cacheControl: 'no-cache')
+              // cacheControl: 'public, max-age=31536000',
+            }
+          }).then(i => {
+            res.status(200)
+            //console.log(JSON.stringify(i))
+            res.send({success: true, uploaded: i[1]})
+            console.log({success: true, uploaded: i[1]})
+            res.end()
+          }).catch(i => {
+            res.status(500)
+            //console.log(i)
+            res.send({success: false, error: i})
+            res.end()
+          });
+
+        });
+        archive.on('error', function (err) {
+          throw err;
+        });
+
+        archive.pipe(output);
+        archive.directory('./private/waivers/')
+        archive.finalize();
+
+      })
+
+
+    })
+
+  } else {
+    res.status(403)
     res.end()
   }
 })
