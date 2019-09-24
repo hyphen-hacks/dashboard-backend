@@ -8,6 +8,7 @@ const CryptoJS = require("crypto-js");
 const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313', 'https://emails.hyphen-hacks.com', 'http://emails.hyphen-hacks.com']
 const moment = require('moment')
 const momentTZ = require('moment-timezone')
+
 let log = require('log4node');
 const path = require('path')
 const DataStorage = require('./dataStorage.js')
@@ -277,6 +278,127 @@ app.get('/api/v2/statsBlock', (req, res) => {
     res.end()
   }
 })
+app.get('/api/v3/getCompletedWaivers', (req, res) => {
+  console.log('got a request to get completed waivers')
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-control": "no-cache"
+  });
+
+  if (req.headers.authorization === apiKeyAuth) {
+    console.log('api good')
+    res.write(JSON.stringify({status: "Authenticated", inProgress: true}))
+    const peopleRef = db.collection('people');
+    const waiversCompleteRef = peopleRef.where('waiverStatus', '==', 2);
+    waiversCompleteRef.get().then(snap => {
+      res.write(JSON.stringify({status: "Indexing Waivers", inProgress: true}))
+      if (snap.empty) {
+        console.log('No matching documents.');
+        return;
+      }
+      let counter = 0;
+      let found = 0;
+      let toDownload = []
+      snap.forEach(doc => {
+
+        console.log('found', found)
+        const waiverDBUrl = doc.data().waiverImage
+        //console.log(waiverDBUrl)
+        toDownload.push({id: doc.id, src: waiverDBUrl});
+
+      });
+      console.log('Download Length:', toDownload.length)
+      let i = 0;
+      downloadItems = async () => {
+        while (i < toDownload.length) {
+          const id = toDownload[i].id;
+          const srcFilename = toDownload[i].src
+          let destFilename = './private/waivers/' + id
+
+          const result = await bucket.file(srcFilename).getMetadata()
+          const contentType = result[0].contentType
+          //console.log(contentType)
+          if (contentType === 'image/svg+xml') {
+            destFilename += '.svg'
+          } else {
+            destFilename += '.' + contentType.match(/\/([^\/]+)\/?$/)[1]
+          }
+          //console.log(destFilename)
+          const options = {
+            // The path to which the file should be downloaded, e.g. "./file.txt"
+            destination: destFilename,
+          };
+
+          await bucket.file(srcFilename).download(options)
+          counter++
+          //console.log(`gs://${bucketName}/${srcFilename} downloaded to ${destFilename}.`);
+          console.log('downloaded', counter, Math.round((counter / toDownload.length) * 100) + '%')
+          if (Math.round((counter / toDownload.length) * 100) === 100) {
+
+          } else {
+            res.write(JSON.stringify({inProgress: true, status: `Downloading ${Math.round((counter / toDownload.length) * 100)}%`}))
+          }
+
+
+          i++
+        }
+      }
+      downloadItems().then(i => {
+        console.log('competed Download')
+        res.write(JSON.stringify({inProgress: true, status: 'Archiving Waivers'}))
+        const date = momentTZ().tz('America/Los_Angeles').format()
+        let output = file_system.createWriteStream(`./private/completedWaivers.zip`);
+        let archive = archiver('zip');
+        output.on('close', () => {
+          console.log(archive.pointer() + ' total bytes');
+          console.log('archiver has been finalized and the output file descriptor has closed.');
+          res.write(JSON.stringify({inProgress: true, status: 'uploading waivers to gCloud'}))
+
+          bucket.upload(`./private/completedWaivers.zip`, {
+            // Support for HTTP requests made with `Accept-Encoding: gzip`
+            gzip: true,
+            // By setting the option `destination`, you can change the name of the
+            // object you are uploading to a bucket.
+            destination: 'private/completedWaivers.zip',
+            metadata: {
+              // Enable long-lived HTTP caching headers
+              // Use only if the contents of the file will never change
+              // (If the contents will change, use cacheControl: 'no-cache')
+              // cacheControl: 'public, max-age=31536000',
+            }
+          }).then(i => {
+            res.status(200)
+            //console.log(JSON.stringify(i))
+            res.write(JSON.stringify({success: true, uploaded: i[1]}))
+            console.log({success: true, uploaded: i[1]})
+            res.end()
+          }).catch(i => {
+            res.status(500)
+            //console.log(i)
+            res.send(JSON.stringify({success: false, error: i}))
+            res.end()
+          });
+
+        });
+        archive.on('error', function (err) {
+          throw err;
+        });
+
+        archive.pipe(output);
+        archive.directory('./private/waivers/')
+        archive.finalize();
+
+      })
+
+
+    })
+  } else {
+    res.status(403)
+    res.write(JSON.stringify({success: false, error: "Not Authorized"}))
+    res.end()
+  }
+
+})
 app.get('/api/v2/getCompletedWaivers', (req, res) => {
   log.info('got a request to get completed waivers')
 
@@ -293,8 +415,6 @@ app.get('/api/v2/getCompletedWaivers', (req, res) => {
     res.end()
 
      */
-
-
 
 
     waiversCompleteRef.get().then(snap => {
@@ -1168,6 +1288,7 @@ app.post('/api/v1/eventbriteAttendeeUpdated', function (req, res) {
 
 
 });
+
 const server = app.listen(port, function () {
 
   const host = server.address().address
@@ -1176,3 +1297,4 @@ const server = app.listen(port, function () {
   log.info('API initialized and listening', host, port)
 
 });
+
