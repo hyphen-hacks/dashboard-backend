@@ -1,6 +1,6 @@
 {
   "name": "hyphen-hacks-admind-dashboard-backend",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Backend for Hyphen Hacks 2019",
   "main": "index.js",
   "scripts": {
