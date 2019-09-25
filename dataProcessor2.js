@@ -70,7 +70,10 @@ function processData() {
           DS.dateStat.add({path: 'attendeesSignedUp', value: person.created})
           DS.textStat.increment({path: 'graduationDistribution', value: person.answers[0].answer})
           DS.multiTextStat.increment({path: 'schools', value: person.answers[1].answer})
-          DS.multiTextStat.increment({path: 'referrers', value: person.answers[23].answer})
+          if (person.answers[23].answer) {
+            DS.multiTextStat.increment({path: 'referrers', value: person.answers[23].answer})
+          }
+
 
           DS.textStat.increment({path: 'shirtSizeDistribution', value: person.answers[2].answer})
           DS.textStat.increment({path: 'attendeeRaceDistribution', value: person.answers[3].answer})
