@@ -8,6 +8,7 @@ const CryptoJS = require("crypto-js");
 const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com', 'https://dashboard.hyphen-hacks.com', 'http://hyphen-hacks.com', 'http://waivers.hyphen-hacks.com', 'http://dashboard.hyphen-hacks.com', 'http://localhost:8080', 'https://staging.hyphen-hacks.com', 'http://localhost:1313', 'https://emails.hyphen-hacks.com', 'http://emails.hyphen-hacks.com']
 const moment = require('moment')
 const momentTZ = require('moment-timezone')
+const rimraf = require("rimraf");
 
 let log = require('log4node');
 const path = require('path')
@@ -300,7 +301,9 @@ app.get('/api/v3/getCompletedWaivers', (req, res) => {
       let found = 0;
       let toDownload = []
       snap.forEach(doc => {
-
+        if (doc.data().testApplicant) {
+          return;
+        }
         console.log('found', found)
         const waiverDBUrl = doc.data().waiverImage
         //console.log(waiverDBUrl)
@@ -309,6 +312,8 @@ app.get('/api/v3/getCompletedWaivers', (req, res) => {
       });
       console.log('Download Length:', toDownload.length)
       let i = 0;
+      rimraf.sync("./private/waivers/");
+      fs.mkdirSync("./private/waivers/");
       downloadItems = async () => {
         while (i < toDownload.length) {
           const id = toDownload[i].id;
@@ -336,7 +341,9 @@ app.get('/api/v3/getCompletedWaivers', (req, res) => {
           if (Math.round((counter / toDownload.length) * 100) === 100) {
 
           } else {
-            res.write(JSON.stringify({inProgress: true, status: `Downloading ${Math.round((counter / toDownload.length) * 100)}%`}))
+            res.write(JSON.stringify({
+              inProgress: true, status: `Downloading ${Math.round((counter / toDownload.length) * 100)}%`
+            }))
           }
 
 
