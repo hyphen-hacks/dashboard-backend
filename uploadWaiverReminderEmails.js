@@ -28,19 +28,24 @@ function Person(input) {
 const db = admin.firestore();
 const peopleRef = db.collection('people');
 const queryRef = peopleRef.where('waiverStatus', '<', 2);
-queryRef.get().then(data => {
+peopleRef.get().then(data => {
   data.forEach(snap => {
     const person = snap.data()
-    const cleanedPerson = new Person(person)
-    if (emails.indexOf(cleanedPerson.email) > 0) {
-      console.log('email dup', cleanedPerson.email)
-    } else {
-      requestBody.push(cleanedPerson)
+    if (person.waiverStatus !== 2) {
+      const cleanedPerson = new Person(person)
+      if (emails.indexOf(cleanedPerson.email) > 0) {
+        console.log('email dup', cleanedPerson.email)
+      } else {
+        requestBody.push(cleanedPerson)
+      }
+      emails.push(cleanedPerson.email)
     }
-    emails.push(cleanedPerson.email)
+
   })
   console.log('Cleaned:', emails.length, 'people')
-  fs.writeFile('./private/emailsUploadWaivers.json', JSON.stringify(requestBody), e => {console.log(e)})
+  fs.writeFile('./private/emailsUploadWaivers.json', JSON.stringify(requestBody), e => {
+    console.log(e)
+  })
   fetch(endPoint, {
     method: 'post',
     headers: {
@@ -49,6 +54,8 @@ queryRef.get().then(data => {
     body: JSON.stringify(requestBody)
   }).then(e => e.json()).then(e => {
     console.log(e)
-    fs.writeFile('./private/emailsErrorWaiver.json', JSON.stringify(e), err => {console.log(err)})
+    fs.writeFile('./private/emailsErrorWaiver.json', JSON.stringify(e), err => {
+      console.log(err)
+    })
   })
 });
