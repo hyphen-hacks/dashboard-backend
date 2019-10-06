@@ -14,7 +14,7 @@ admin.initializeApp({
 });
 const startTime = moment().tz("America/Los_Angeles").format('MMM Do, HH:mm:ss')
 const nodeVersion = process.version
-console.log(`Hyphen-Hacks Data Processor v2 API Init ${startTime} Node ${nodeVersion}`)
+console.log(`Hyphen-Hacks Data Processor v3 API Init ${startTime} Node ${nodeVersion}`)
 
 function processData() {
   console.log('Loading Data', moment().tz("America/Los_Angeles").format('MMMM Do YYYY, h:mm:ss a'))
@@ -116,22 +116,28 @@ function processData() {
       }
 
     })
-    fs.writeFile('./private/analyticsDatabase.json', JSON.stringify(DS.getJSON()), (e) => {
+    const dataToSend = JSON.stringify(DS.getJSON())
+    admin.firestore().collection('secrets').doc('analytics').set(JSON.parse(dataToSend)).then(e => {
+      if (e.error) {
+        console.log(e.error)
+      } else {
+        console.log('written for v3')
+      }
+    })
+    fs.writeFile('./private/analyticsDatabase.json', dataToSend, (e) => {
       if (e) {
         console.log(e)
       }
-      console.log('writen')
+      console.log('writen for legacy')
     })
   })
 
 
 }
 
-cron.schedule('*/30 * * * *', () => {
-  console.log('running a task every half hour');
+admin.firestore().collection('secrets').doc('changelog').onSnapshot(docSnapshot => {
+  console.log(`Received doc snapshot: ${moment().tz('America/Los_Angeles').format('dddd, MMMM Do YYYY, h:mm:ss a')}`);
   processData()
-
+}, err => {
+  console.log(`Encountered error: ${err}`);
 });
-processData()
-
-

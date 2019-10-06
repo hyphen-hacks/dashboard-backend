@@ -15,9 +15,11 @@ admin.initializeApp({
 function Person(input) {
   this.email = input.email
   this.name = input.name
+  this.firstName = input.profile.first_name
   this.referrer = 'hyphen-hacks_2019'
   this.years_involved = '2019'
   this.waiver_completed = 'false'
+  this.id = input.id
   if (input.ticket_class_name === 'High school Student') {
     this.role = 'attendee'
   } else {
@@ -27,7 +29,7 @@ function Person(input) {
 
 const db = admin.firestore();
 const peopleRef = db.collection('people');
-const queryRef = peopleRef.where('waiverStatus', '<', 2);
+
 peopleRef.get().then(data => {
   data.forEach(snap => {
     const person = snap.data()
@@ -37,6 +39,49 @@ peopleRef.get().then(data => {
         console.log('email dup', cleanedPerson.email)
       } else {
         requestBody.push(cleanedPerson)
+        const mailBody = {
+          "personalizations": [
+            {
+              "to": [
+                {
+                  "email": cleanedPerson.email,
+                  "name": cleanedPerson.name
+                }
+              ],
+              "dynamic_template_data": {
+                "name": cleanedPerson.firstName,
+                "link": `https://waivers.hyphen-hacks.com/#/p/${cleanedPerson.id}`
+              }
+            }
+          ],
+          "from": {
+            "email": "noreply@hyphen-hacks.com",
+            "name": "Ronan at Hyphen Hacks"
+          },
+          "reply_to": {
+            "email": "support@hyphen-hacks.com",
+            "name": "Ronan"
+          },
+          "template_id": "d-ca87886790714717846b7a818ca970de",
+          "tracking_settings": {
+            "click_tracking": {
+              'enable': true
+            }
+          }
+        };
+        // log.info(JSON.stringify(mailBody))
+        fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'post',
+          headers: {
+            'Authorization': 'Bearer ' + keys.sendGrid,
+            "content-type": "application/json"
+          },
+          body: JSON.stringify(mailBody)
+        }).then(() => {
+          console.log('sent to', cleanedPerson.email)
+        }).catch(e => {
+          console.log(e)
+        });
       }
       emails.push(cleanedPerson.email)
     }
@@ -46,16 +91,19 @@ peopleRef.get().then(data => {
   fs.writeFile('./private/emailsUploadWaivers.json', JSON.stringify(requestBody), e => {
     console.log(e)
   })
-  fetch(endPoint, {
-    method: 'post',
-    headers: {
-      Authorization: 'Bearer ' + keys.sendGrid
-    },
-    body: JSON.stringify(requestBody)
-  }).then(e => e.json()).then(e => {
-    console.log(e)
-    fs.writeFile('./private/emailsErrorWaiver.json', JSON.stringify(e), err => {
-      console.log(err)
-    })
+})
+/*
+fetch(endPoint, {
+  method: 'post',
+  headers: {
+    Authorization: 'Bearer ' + keys.sendGrid
+  },
+  body: JSON.stringify(requestBody)
+}).then(e => e.json()).then(e => {
+  console.log(e)
+  fs.writeFile('./private/emailsErrorWaiver.json', JSON.stringify(e), err => {
+    console.log(err)
   })
+})
 });
+*/
