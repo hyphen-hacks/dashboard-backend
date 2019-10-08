@@ -26,7 +26,7 @@ const corsOptions = {
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 const version = require('./package').version
-const startTime = moment().format('MMM Do, HH:mm:ss')
+const startTime = momentTZ().tz('America/Los_Angeles').format('MMM Do, HH:mm:ss')
 
 log.info(`Hyphen-Hacks Server API Init ${startTime} v${version}`)
 //console.log('cors whitlist', whitelist)
