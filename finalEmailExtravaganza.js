@@ -7,11 +7,16 @@ const endPoint = 'https://api.sendgrid.com/v3/contactdb/recipients'
 let requestBody = []
 let emails = []
 const production = false
-const testingEmails = ['rsf.sho@gmail.com', 'ben.grant@hyphen-hacks.com']
+const rejectedPeople = require('./private/rejected').rejected
+console.log(rejectedPeople.length)
+//const testingEmails = ['rsf.sho@gmail.com', 'ben.grant@hyphen-hacks.com']
+const testingEmails = []
 admin.initializeApp({
   credential: admin.credential.cert(keys.firebase),
   databaseURL: "https://hyphen-hacks-2019.firebaseio.com"
 });
+
+
 
 function Person(input) {
   this.email = input.email
@@ -21,7 +26,14 @@ function Person(input) {
   this.years_involved = '2019'
   this.waiver_completed = input.waiverStatus === 2
   this.id = input.id
-  this.accepted = true
+
+  if (rejectedPeople.indexOf(Number(input.id)) === -1) {
+    this.accepted = true
+
+  } else {
+    this.accepted = false
+    console.log('Denied',  input.name)
+  }
   if (input.ticket_class_name === 'High school Student') {
     this.role = 'attendee'
     this.school = input.answers[1].answer
