@@ -6,7 +6,7 @@ const moment = require('moment')
 const endPoint = 'https://api.sendgrid.com/v3/contactdb/recipients'
 let requestBody = []
 let emails = []
-const production = false
+const production = true
 const rejectedPeople = require('./private/rejected').rejected
 console.log(rejectedPeople.length)
 //const testingEmails = ['rsf.sho@gmail.com', 'ben.grant@hyphen-hacks.com']

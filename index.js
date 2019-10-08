@@ -17,7 +17,7 @@ let DS = new DataStorage()
 var file_system = require('fs');
 var archiver = require('archiver');
 // or
-const heic2any = require("heic2any");
+//const heic2any = require("heic2any");
 
 
 log.reconfigure({level: 'debug', file: './private/logs.log'});
