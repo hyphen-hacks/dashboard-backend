@@ -9,7 +9,10 @@ const whitelist = ['https://hyphen-hacks.com', 'https://waivers.hyphen-hacks.com
 const moment = require('moment')
 const momentTZ = require('moment-timezone')
 const rimraf = require("rimraf");
+const {Expo} = require('expo-server-sdk');
 
+// Create a new Expo SDK client
+let expo = new Expo();
 let log = require('log4node');
 const path = require('path')
 const DataStorage = require('./dataStorage.js')
@@ -629,6 +632,52 @@ app.get('/api/v2/headerRow', (req, res) => {
     res.status(401)
     res.send({error: {message: 'invalid dashboard api key'}})
     res.end()
+  }
+})
+
+app.post('/api/v3/pushnotification', (req, res) => {
+  log.info('got a request to send an push notification', req.body, req.origin)
+  const body = req.body
+  if (req.headers.authorization === apiKeyAuth) {
+    log.info('api good')
+    db.collection('tokens').get().then(snap => {
+      let tokens = []
+      let messages = [];
+      let logs = []
+      snap.forEach(async token => {
+        const pushToken = token.data().token
+        console.log(pushToken)
+        tokens.push(pushToken)
+        if (!Expo.isExpoPushToken(pushToken)) {
+          console.log(`Push token ${pushToken} is not a valid Expo push token`);
+        } else {
+          const message = {
+            to: pushToken,
+            sound: 'default',
+            body: body.message,
+          }
+          // Construct a message (see https://docs.expo.io/versions/latest/guides/push-notifications.html)
+          messages.push(message)
+
+          const res = await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(message)
+          })
+          const jsonRes = await res.json()
+          console.log(jsonRes)
+          logs.push(jsonRes)
+        }
+
+
+      })
+      res.send({sent: true, number: messages.length})
+      res.end()
+
+
+    })
   }
 })
 app.post('/api/v1/sendEmail', (req, res) => {
