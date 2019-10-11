@@ -654,6 +654,7 @@ app.post('/api/v3/pushnotification', (req, res) => {
           const message = {
             to: pushToken,
             sound: 'default',
+            title: body.title,
             body: body.message,
           }
           // Construct a message (see https://docs.expo.io/versions/latest/guides/push-notifications.html)
