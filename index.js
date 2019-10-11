@@ -679,9 +679,10 @@ app.post('/api/v3/pushnotification', (req, res) => {
 
     })
   } else {
-    console.log('bad api')
-    res.status(400)
-    res.send({error: {message: 'invalid request, must have email and name', type: 'missing parameter'}})
+
+    log.error('invalid dashboard api key')
+    res.status(401)
+    res.send({error: {message: 'invalid dashboard api key', type: 'unauthorized'}})
     res.end()
   }
 })
