@@ -678,6 +678,11 @@ app.post('/api/v3/pushnotification', (req, res) => {
 
 
     })
+  } else {
+    console.log('bad api')
+    res.status(400)
+    res.send({error: {message: 'invalid request, must have email and name', type: 'missing parameter'}})
+    res.end()
   }
 })
 app.post('/api/v1/sendEmail', (req, res) => {
