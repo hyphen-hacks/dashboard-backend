@@ -653,10 +653,10 @@ app.post('/api/v3/pushnotification', (req, res) => {
         } else {
           const message = {
             to: pushToken,
-            sound: 'default',
+            //sound: 'default',
             title: body.title,
             body: body.message,
-            icon: 'https://i.imgur.com/fnB0g5p.png'
+            //icon: 'https://i.imgur.com/fnB0g5p.png'
           }
           // Construct a message (see https://docs.expo.io/versions/latest/guides/push-notifications.html)
           messages.push(message)
