@@ -642,6 +642,7 @@ app.post('/api/v3/pushnotification', (req, res) => {
     log.info('api good')
     db.collection('tokens').get().then(snap => {
       let tokens = []
+      let sent = []
       let messages = [];
       let logs = []
       snap.forEach(async token => {
@@ -651,26 +652,37 @@ app.post('/api/v3/pushnotification', (req, res) => {
         if (!Expo.isExpoPushToken(pushToken)) {
           console.log(`Push token ${pushToken} is not a valid Expo push token`);
         } else {
-          const message = {
-            to: pushToken,
-            //sound: 'default',
-            title: body.title,
-            body: body.message,
-            //icon: 'https://i.imgur.com/fnB0g5p.png'
-          }
-          // Construct a message (see https://docs.expo.io/versions/latest/guides/push-notifications.html)
-          messages.push(message)
+          console.log(sent, pushToken, sent.indexOf(pushToken))
+          if (sent.indexOf(pushToken) === -1) {
+            const message = {
+              to: pushToken,
+              sound: 'default',
+              title: body.title,
+              body: body.message,
+              icon: 'https://i.imgur.com/fnB0g5p.png'
+            }
+            // Construct a message (see https://docs.expo.io/versions/latest/guides/push-notifications.html)
+            messages.push(message)
 
-          const res = await fetch('https://exp.host/--/api/v2/push/send', {
-            method: 'POST',
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(message)
-          })
-          const jsonRes = await res.json()
-          console.log(jsonRes)
-          logs.push(jsonRes)
+            const res = await fetch('https://exp.host/--/api/v2/push/send', {
+              method: 'POST',
+              headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip, deflate"
+              },
+              body: JSON.stringify(message)
+            })
+            const jsonRes = await res.json()
+
+
+            console.log(jsonRes)
+            logs.push(jsonRes)
+            console.log('sent to', pushToken)
+            sent.push(pushToken)
+          }
+
+
         }
 
 
