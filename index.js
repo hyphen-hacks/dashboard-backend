@@ -641,6 +641,13 @@ app.post('/api/v3/pushnotification', (req, res) => {
   console.log(body)
   if (req.headers.authorization === apiKeyAuth) {
     log.info('api good')
+    db.collection('notifications').add({
+      content: body.message,
+      title: body.title,
+      timeStamp: admin.firestore.Timestamp.fromDate(new Date())
+    }).then(i => {
+      console.log('updated announcements')
+    })
     db.collection('tokens').get().then(snap => {
       let tokens = []
       let sent = []
