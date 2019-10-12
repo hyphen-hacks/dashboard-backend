@@ -639,7 +639,7 @@ app.post('/api/v3/pushnotification', (req, res) => {
   log.info('got a request to send an push notification', req.body, req.origin)
   const body = req.body
   console.log(body)
-  if (req.headers.authorization === apiKeyAuth || true) {
+  if (req.headers.authorization === apiKeyAuth) {
     log.info('api good')
     db.collection('tokens').get().then(snap => {
       let tokens = []
