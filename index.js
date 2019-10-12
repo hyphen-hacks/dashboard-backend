@@ -638,7 +638,8 @@ app.get('/api/v2/headerRow', (req, res) => {
 app.post('/api/v3/pushnotification', (req, res) => {
   log.info('got a request to send an push notification', req.body, req.origin)
   const body = req.body
-  if (req.headers.authorization === apiKeyAuth|| true) {
+  console.log(body)
+  if (req.headers.authorization === apiKeyAuth || true) {
     log.info('api good')
     db.collection('tokens').get().then(snap => {
       let tokens = []
