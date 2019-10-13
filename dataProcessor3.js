@@ -59,7 +59,7 @@ function processData() {
     console.log('downloaded Data', timeFetched.format('MMMM Do YYYY, h:mm:ss a'))
     snap.forEach(i => {
       const person = i.data()
-      if (!person.testApplicant) {
+      if (!person.testApplicant && person.answers) {
         DS.singleStat.increment({path: 'totalPeople'})
         let role = ''
         if (person.ticket_class_name === 'High school Student') {
